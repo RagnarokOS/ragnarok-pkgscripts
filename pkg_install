@@ -1,0 +1,43 @@
+#!/bin/ksh
+
+# $Ragnarok: pkg_install,v 1.1 2025/04/06 22:57:17 lecorbeau Exp $
+# Install or update "third party" package(s).
+
+# Install packages.
+inst_pkg() {
+	local _pkgs
+
+	set -A _pkgs -- "$@"
+
+	# It's possible to just install the whole @custom set in one go.
+	if [[ ${#_pkgs[@]} == 0 ]]; then
+    		/usr/bin/emerge -av --oneshot @custom
+	else
+		for _pkg in "${_pkgs[@]}"; do
+			printf '%s\n' "$_pkg" >> /etc/portage/sets/local
+		done
+
+		emerge -av --oneshot "${_pkgs[@]}"
+	fi
+}
+
+# Update pkg(s).
+upd_pkg() {
+	local _pkgs
+
+	set -A _pkgs -- "$@"
+
+	# If no package name is provided, update the whole system. This is the recommend default behavior.
+	if [[ ${#_pkgs[@]} == 0 ]]; then
+    		/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @custom
+	else
+		/usr/bin/emerge -avuDN --with-bdeps=y --oneshot "${_pkgs[@]}"
+	fi
+}
+
+case "$1" in
+	-u)	upd_pkg "$@"
+		;;
+	*)	inst_pkg "$@"
+		;;
+esac
