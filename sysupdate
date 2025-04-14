@@ -1,0 +1,230 @@
+#!/bin/ksh
+
+# sysupdate: update Ragnarok base system. WORK IN PROGRESS.
+#
+# $Ragnarok: sysupdate,v 1.1 2025/04/14 17:34:41 lecorbeau Exp $
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#											#
+#	Copyright (c) 2023, Ian LeCorbeau <I-LeCorbeau (at) protonmail (dot) com>	#
+#											#
+#	Permission to use, copy, modify, and/or distribute this software for any	#
+#	purpose with or without fee is hereby granted, provided that the above		#
+#	copyright notice and this permission notice appear in all copies.		#
+#											#
+#	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES	#
+#	WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF		#
+#	MERCHANTABILITY AND FITNESS IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR		#
+#	ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES		#
+#	WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN		#
+#	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF		#
+#	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.			#
+#											#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+set -e
+umask 0022
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+CONF="/etc/sysupdate.conf"
+TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
+UPDIR="/var/db/sysupdate"
+
+usage() {
+	printf '%s\n' "
+Options:
+
+-d	download, but don't install, update specified as argument 1.
+
+-h	Show this help message.
+
+-l	List installed updates, if there are any.
+
+-q	Check if there are any updates available.
+
+-r	Revert an update. Must supply name of program as argument 1.
+
+The most common operation is to run sysupdate with no option, which will
+download and install available binary updates.
+"
+}
+
+# Get a config value, formatted as 'config="value"', from a file.
+getvar() {
+	local _val="$1" _file="$2"
+
+	grep "$_val" "$_file" | cut -d '"' -f2
+}
+
+# Now, get the values from sysupdate.conf
+MIRROR=$(getvar MIRROR "$CONF")
+PUBKEY=$(getvar PUBKEY "$CONF")
+VERSION=$(getvar VERSION "$CONF")
+URL="${MIRROR}/${VERSION}"
+
+# Never download stuff from the internet as the root user
+# I take no credit for this function. All credit goes to
+# Antoine Jacoutot, who wrote OpenBSD's syspatch(1).
+unpriv() {
+	local _file=$2 _ret=0 _user=sysupdate
+
+	if [[ $1 == -f && -n ${_file} ]]; then
+		# shellcheck disable=SC2188
+		>${_file}
+		chown "${_user}" "${_file}"
+		chmod 0711 "${TMP}"
+		shift 2
+	fi
+	(($# >= 1))
+
+	su -s /bin/sh ${_user} -c "$@" || _ret=$?
+
+	[[ -n ${_file} ]] && chown root "${_file}"
+
+	return ${_ret}
+}
+
+# Get index.txt and it's .sig file.
+get_file() {
+	local _ret
+
+	printf '%s\n' "Fetching sysupdate list..."
+	cd "${TMP}" || cd
+	unpriv -f "${TMP}/index.txt" "wget -q --show-progress -O index.txt ${URL}/index.txt" || _ret=$?
+	if ((_ret != 0)); then
+		printf '%s\n' "No Updates Available"
+		exit 2
+	fi
+	unpriv -f "${TMP}/index.txt.sig" "wget -q --show-progress -O index.txt.sig ${URL}/index.txt.sig"
+}
+
+# Fetching the updates
+get_upd() {
+	local _file="$1"
+
+	cd "${TMP}" || cd
+	unpriv -f "${TMP}/${_file}" "wget -q --show-progress -O ${_file} ${URL}/${_file}"
+}
+
+# Verify patch file sig. If signify returns a non-zero
+# exit status, abort.
+check_sig() {
+	local _file="$1"
+
+	if ! /usr/bin/signify -V -p "$PUBKEY" -x "${_file}".sig -m "$_file"; then
+		echo "Signature verification failed. Exiting..."
+		exit 1
+	fi
+}
+
+# Check if there are any updates
+check_update() {
+	local _updates
+
+	# Fetch update file and verify its signature
+	get_file
+	check_sig "${TMP}/index.txt"
+
+	_updates=$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')
+
+	# If there are no updates, exit and return 2
+	if [[ -z $_updates ]]; then
+		printf '%s\n' "No updates found"
+		exit 2
+	else
+		return 0
+	fi
+}
+
+do_update() {
+	local _patchdir _patches
+
+	# If index.txt doesn't exist yet, create it
+	[[ ! -f ${UPDIR}/index.txt ]] && touch "${UPDIR}/index.txt"
+
+	check_update
+
+	# shellcheck disable=SC2046	# We DO want word splitting.
+	set -A _patches -- $(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')
+	printf '%s\n' "Downloading updates..." &&
+	for _patch in "${_patches[@]}"; do
+		get_upd "${_patch}.tgz"
+		get_upd "${_patch}.tgz.sig"
+	done
+
+	for patch in "${_patches[@]}"; do
+		printf '%s\n' "Verifying $_patch signature"
+		check_sig "${TMP}/${_patch}.tgz"
+		printf '%s\n' "Installing ${_patch}..."
+		tar xvf "${TMP}/${_patch}.tgz" -C "${UPDIR}/"
+		export PKGDIR="${UPDIR}/${_patch}" && emerge -avuDN --usepkgonly --with-bdeps=y @world
+	done
+
+	# Copy the new sysupdate list to ${UPDIR}
+	printf '%s\n' "Updating ${UPDIR}/index.txt..."
+	cp "${TMP}/index.txt" "${UPDIR}/"
+	# Make sure the new list is owned by the sysupdate user
+	chown sysupdate:sysupdate "${UPDIR}/index.txt"
+
+	exit 0
+}
+
+# Download update but don't install it.
+do_download() {
+	local _pkg
+
+	get_file
+
+	_pkg=$(grep "$1" "${TMP}/index.txt")
+
+	get_upd "${_pkg}.tgz"
+	get_upd "${_pkg}.tgz.sig"
+
+	# move package to ${UPDIR}
+	unpriv "cp ${TMP}/${_pkg}.tgz ${UPDIR}/"
+	unpriv "cp ${TMP}/${_pkg}.tgz.sig ${UPDIR}/"
+}
+
+# List installed update
+do_list() {
+	printf '%s\n' "The following updates are installed:"
+	cat "${UPDIR}/index.txt"
+}
+
+# Check if updates are available.
+do_query() {
+	check_update
+	_ret=$?
+
+	case "$_ret" in
+		0)	printf '%s\n' "
+The following updates are available:
+$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { print $2 }')
+"
+			;;
+		*)	printf '%s\n' "No updates found"
+			;;
+	esac
+}
+
+# Cleanup after finish
+cleanup() {
+	set +e
+	rm -rf "${TMP}"
+}
+
+trap 'cleanup' EXIT
+trap exit HUP INT TERM
+
+case "$1" in
+	-d)	do_download "$2"
+		;;
+	-h)	usage
+		;;
+	-l)	do_list
+		;;
+	-q)	do_query
+		;;
+	*)	do_update
+		;;
+esac
