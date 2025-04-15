@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.2 2025/04/15 18:06:21 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.3 2025/04/15 18:21:46 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -195,20 +195,12 @@ do_list() {
 do_query() {
 	local _avail
 
-	set -A _avail -- "$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { print $2 }')"
-
 	check_update
-	_ret=$?
 
-	case "$_ret" in
-		0)	printf '%s\n' "
-The following updates are available:
+	set -A _avail -- "$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')"
+	printf '%s\n' "The following updates are available:
 ${_avail[*]}
 "
-			;;
-		*)	printf '%s\n' "No updates found"
-			;;
-	esac
 }
 
 # Cleanup after finish
