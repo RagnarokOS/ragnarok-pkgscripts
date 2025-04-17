@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.3 2025/04/16 18:07:42 lecorbeau Exp $
+# $Ragnarok: pkg_install,v 1.3 2025/04/16 18:07:42 lecorbeau Exp ian $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -9,24 +9,24 @@ inst_pkg() {
 
 	set -A _pkgs -- "$@"
 
-	# It's possible to just install the whole @custom set in one go.
+	# It's possible to just install the whole @local set in one go.
 	#if [[ ${#_pkgs[@]} == 0 ]]; then
-	if [[ ${_pkgs[*]} == @custom ]]; then
-    		/usr/bin/emerge -av --oneshot @custom
+	if [[ ${_pkgs[*]} == @local ]]; then
+    		/usr/bin/emerge -av --oneshot @local
 	else
 		for _pkg in "${_pkgs[@]}"; do
-			if ! grep -q "${_pkg}" /etc/portage/sets/custom; then
-				printf '%s\n' "$_pkg" >> /etc/portage/sets/custom
+			if ! grep -q "${_pkg}" /etc/portage/sets/local; then
+				printf '%s\n' "$_pkg" >> /etc/portage/sets/local
 			fi
 		done
 
-		emerge -av --oneshot --pretend "${_pkgs[@]}"
+		emerge -av --pretend "${_pkgs[@]}"
 	fi
 }
 
 # Update pkgs.
 upd_pkg() {
-	/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @custom
+	/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @local
 }
 
 case "$1" in
