@@ -1,0 +1,26 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt PKG_INSTALL 1
+.Os
+.Sh NAME
+.Nm pkg_install
+.Nd install or update software packages
+.Sh SYNOPSIS
+.Nm pkg_install
+.Bk -words
+.Op Fl u
+.Op Ar pkg-name ...
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+command is used to install or updates packages from the ports, a.k.a
+.Xr ebuild 5 ,
+tree. In other words,
+.Nm
+installs and updates packages which are not in the Ragnarok base system
+or any of the extra sets.
+.Pp
+The options are as follows:
+.Bl -tag -width provided
+.It Fl u Ar pkg-name
