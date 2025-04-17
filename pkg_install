@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.3 2025/04/16 18:07:42 lecorbeau Exp ian $
+# $Ragnarok: pkg_install,v 1.4 2025/04/17 23:47:12 lecorbeau Exp $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -20,7 +20,7 @@ inst_pkg() {
 			fi
 		done
 
-		emerge -av --pretend "${_pkgs[@]}"
+		emerge -av --oneshot "${_pkgs[@]}"
 	fi
 }
 
