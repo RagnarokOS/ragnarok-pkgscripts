@@ -8,19 +8,41 @@
 .Sh SYNOPSIS
 .Nm pkg_install
 .Bk -words
+.Op Fl p
 .Op Fl u
 .Op Ar pkg-name ...
 .Ek
 .Sh DESCRIPTION
 The
 .Nm
-command is used to install or updates packages from the ports, a.k.a
-.Xr ebuild 5 ,
-tree. In other words,
+command is used to install or update packages from the
+.Ar @local
+set. In other words,
 .Nm
 installs and updates packages which are not in the Ragnarok base system
 or any of the extra sets.
 .Pp
+When invoked without any option or
+.Ar pkg-name ,
+.Nm
+will install or update all packages listed in
+.Ar @local .
+When
+.Ar pkg-name
+refers to a package already added to the
+.Ar @local
+set,
+.Nm
+will simply reinstall the package, whether an update is available or not.
+.Pp
 The options are as follows:
-.Bl -tag -width provided
-.It Fl u Ar pkg-name
+.Bl -tag -width -Ds
+.It Fl p
+Instead of installing or updating, simply display what would
+have been installed if the install/update was actually performed.
+.It Fl u
+If no
+.Ar pkg-name
+is specified as the second argument, update all packages. Otherwise, update
+.Ar pkg-name .
+.Ss Technical details
