@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.3 2025/04/15 18:21:46 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.4 2025/04/23 15:17:22 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -95,7 +95,7 @@ get_file() {
 		printf '%s\n' "No Updates Available"
 		exit 2
 	fi
-	unpriv -f "${TMP}/index.txt.sig" "wget -q --show-progress -O index.txt.sig ${URL}/index.txt.sig"
+	unpriv -f "${TMP}/SHA256.sig" "wget -q --show-progress -O SHA256.sig ${URL}/SHA256.sig"
 }
 
 # Fetching the updates
@@ -111,7 +111,7 @@ get_upd() {
 check_sig() {
 	local _file="$1"
 
-	if ! /usr/bin/signify -V -p "$PUBKEY" -x "${_file}".sig -m "$_file"; then
+	if ! /usr/bin/signify -C -p "$PUBKEY" -x SHA256.sig "$_file"; then
 		echo "Signature verification failed. Exiting..."
 		exit 1
 	fi
@@ -149,7 +149,6 @@ do_update() {
 	printf '%s\n' "Downloading updates..." &&
 	for _patch in "${_patches[@]}"; do
 		get_upd "${_patch}.tgz"
-		get_upd "${_patch}.tgz.sig"
 	done
 
 	for patch in "${_patches[@]}"; do
@@ -178,11 +177,9 @@ do_download() {
 	_pkg=$(grep "$1" "${TMP}/index.txt")
 
 	get_upd "${_pkg}.tgz"
-	get_upd "${_pkg}.tgz.sig"
 
 	# move package to ${UPDIR}
 	unpriv "cp ${TMP}/${_pkg}.tgz ${UPDIR}/"
-	unpriv "cp ${TMP}/${_pkg}.tgz.sig ${UPDIR}/"
 }
 
 # List installed update
