@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# $Ragnarok: sysclean,v 1.3 2025/04/13 15:48:17 lecorbeau Exp $
-# Run --depclean, but make sure it ignores the files in the @custom set.
+# $Ragnarok: sysclean,v 1.4 2025/04/23 23:50:17 lecorbeau Exp $
+# Run --depclean, but make sure it ignores the files in the @local set.
 
 # Note, tried using an "_opts" variable instead of duplicating the whole,
 # command, but in didn't work.
 case "$1" in
-	-p)	/usr/bin/emerge -av --pretend --exclude "$(/usr/bin/cat /etc/portage/sets/custom | /usr/bin/xargs -d '\n')" --depclean
+	-p)	/usr/bin/emerge -av --pretend --exclude "$(/usr/bin/cat /etc/portage/sets/local | /usr/bin/xargs -d '\n')" --depclean
 		;;
-	*)	/usr/bin/emerge -av --exclude "$(/usr/bin/cat /etc/portage/sets/custom | /usr/bin/xargs -d '\n')" --depclean
+	*)	/usr/bin/emerge -av --exclude "$(/usr/bin/cat /etc/portage/sets/local | /usr/bin/xargs -d '\n')" --depclean
 		;;
 esac
