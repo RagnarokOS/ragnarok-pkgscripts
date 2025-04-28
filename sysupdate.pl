@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.1 2025/04/28 20:34:12 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.2 2025/04/28 23:49:53 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -43,4 +43,12 @@ sub checkupdate {
 	}
 	close($f1) or err("close");
 	close($f2) or err("close");
+}
+
+sub verify_sig {
+	my ($file) = @_;
+
+	# Use 'and' instead of 'or' because system() returns 'false' when it succeeds.
+	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file")
+		and die("Sig verification failed, exiting.");
 }
