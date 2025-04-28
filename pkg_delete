@@ -1,15 +1,15 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_delete,v 1.1 2025/04/06 19:42:18 lecorbeau Exp $
-# Remove package from the @custom set
+# $Ragnarok: pkg_delete,v 1.2 2025/04/28 18:52:36 lecorbeau Exp $
+# Remove package from the @local set
 
 set -A _pkgs -- "$@"
 
 # shellcheck disable=SC2154
 # Cleanup the set.
 for _pkg in "${_pkgs[@]}"; do
-	sed -i	-e "s#${_pkg}##g" /etc/portage/sets/custom
-	sed -i	-e'/^[[:space:]]*$/d' /etc/portage/sets/custom
+	sed -i	-e "s#${_pkg}##g" /etc/portage/sets/local
+	sed -i	-e'/^[[:space:]]*$/d' /etc/portage/sets/local
 done
 
 # run --depclean against those packages.
