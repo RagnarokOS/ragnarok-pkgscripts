@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.4 2025/04/29 17:23:23 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.5 2025/04/29 17:52:49 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -10,11 +10,18 @@ use Config::Tiny;
 use List::Compare;
 
 # Get values from updates.conf
-# TODO: allow using secondary source for custom sets.
 my $conffile	= 'updates.conf';
 my $config	= Config::Tiny->read($conffile);
 my $mirror	= $config->{ragnarok}->{MIRROR};
 my $pubkey	= $config->{ragnarok}->{PUBKEY};
+
+# Get values from local section if they are defined
+my $local_mirror = undef;
+my $local_pubkey = undef;
+if(defined $config->{local}->{MIRROR}) {
+	$local_mirror = $config->{local}->{MIRROR};
+	$local_pubkey = $config->{local}->{PUBKEY};
+}
 
 # Die on error. Instead of constaly writing "or die ...".
 sub err {
