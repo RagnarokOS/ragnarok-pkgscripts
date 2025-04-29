@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.2 2025/04/28 23:49:53 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.3 2025/04/29 16:03:16 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -45,6 +45,7 @@ sub checkupdate {
 	close($f2) or err("close");
 }
 
+# Verify a file sig with signify(1)
 sub verify_sig {
 	my ($file) = @_;
 
@@ -52,3 +53,38 @@ sub verify_sig {
 	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file")
 		and die("Sig verification failed, exiting.");
 }
+
+# Download file as the 'sysupdate' user.
+# This is fugly, but we need to drop to an unprivileged user. I need
+# to further investigate how secure it is, but it sure is more secure
+# than downloading shit from the internet as root.
+sub download {
+	my ($file, $source) = @_;
+
+	system('/usr/bin/su', '-s', '/bin/sh', 'sysupdate', '-c', "/usr/bin/wget -q --show-progress -O $file $source/$file")
+		and die("Can't download file, exiting.");
+}
+
+# Should this be a subroutine? Perhaps not.
+sub main {
+	my %opts;
+	use Getopt::Long;
+	Getopt::Long::Configure('pass_through');
+	GetOptions(\%opts,
+		'download',
+		'list',
+		'query',
+	);
+
+	# The flags are mutually exclusive.
+	if ($opts{'download'}) {
+		# handle downloading updates
+	} elsif ($opts{'list'}) {
+		# handle listing installed updates
+	} elsif ($opts{'query'}) {
+		# handle checking if updates are available
+	} else {
+		# handle the default: download and install updates
+	}
+}
+main
