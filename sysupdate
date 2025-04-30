@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.4 2025/04/23 15:17:22 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.4 2025/04/23 15:17:22 lecorbeau Exp ian $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -24,11 +24,21 @@
 
 set -e
 umask 0022
-export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+
+# If /usr/lib/ragnarok/sysupdate are not on the system, then set
+# LIBPATH to lib/ (ie this repo's lib dir).
+if [[ ! -d /usr/lib/ragnarok/sysupdate ]]; then
+	LIBPATH="lib"
+else
+	LIBPATH="/usr/lib/ragnarok/sysupdate"
+fi
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$LIBPATH
 
 CONF="/etc/sysupdate.conf"
 TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
 UPDIR="/var/db/sysupdate"
+MIRROR=$(getvar ragnarok MIRROR "$CONF")
+PUBKEY=$(getvar ragnarok PUBKEY "$CONF")
 
 usage() {
 	printf '%s\n' "
@@ -48,19 +58,6 @@ The most common operation is to run sysupdate with no option, which will
 download and install available binary updates.
 "
 }
-
-# Get a config value, formatted as 'config="value"', from a file.
-getvar() {
-	local _val="$1" _file="$2"
-
-	grep "$_val" "$_file" | cut -d '"' -f2
-}
-
-# Now, get the values from sysupdate.conf
-MIRROR=$(getvar MIRROR "$CONF")
-PUBKEY=$(getvar PUBKEY "$CONF")
-VERSION=$(getvar VERSION "$CONF")
-URL="${MIRROR}/${VERSION}"
 
 # Never download stuff from the internet as the root user
 # I take no credit for this function. All credit goes to
@@ -90,12 +87,12 @@ get_file() {
 
 	printf '%s\n' "Fetching sysupdate list..."
 	cd "${TMP}" || cd
-	unpriv -f "${TMP}/index.txt" "wget -q --show-progress -O index.txt ${URL}/index.txt" || _ret=$?
+	unpriv -f "${TMP}/index.txt" "wget -q --show-progress -O index.txt ${MIRROR}/index.txt" || _ret=$?
 	if ((_ret != 0)); then
 		printf '%s\n' "No Updates Available"
 		exit 2
 	fi
-	unpriv -f "${TMP}/SHA256.sig" "wget -q --show-progress -O SHA256.sig ${URL}/SHA256.sig"
+	unpriv -f "${TMP}/SHA256.sig" "wget -q --show-progress -O SHA256.sig ${MIRROR}/SHA256.sig"
 }
 
 # Fetching the updates
@@ -103,7 +100,7 @@ get_upd() {
 	local _file="$1"
 
 	cd "${TMP}" || cd
-	unpriv -f "${TMP}/${_file}" "wget -q --show-progress -O ${_file} ${URL}/${_file}"
+	unpriv -f "${TMP}/${_file}" "wget -q --show-progress -O ${_file} ${MIRROR}/${_file}"
 }
 
 # Verify patch file sig. If signify returns a non-zero
