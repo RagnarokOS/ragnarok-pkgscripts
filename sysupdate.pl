@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.6 2025/04/30 17:43:55 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.7 2025/04/30 17:53:22 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -8,6 +8,10 @@ use strict;
 use warnings;
 use Config::Tiny;
 use List::Compare;
+use File::Temp qw(tempdir);
+use File::chdir;
+use Getopt::Long;
+Getopt::Long::Configure('pass_through');
 
 # Get values from updates.conf
 my $conffile	= 'updates.conf';
@@ -70,9 +74,14 @@ sub download {
 
 # Should this be a subroutine? Perhaps not.
 sub main {
+	my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
+	my $update_dir	= '/var/db/sysupdate';
 	my %opts;
-	use Getopt::Long;
-	Getopt::Long::Configure('pass_through');
+
+	# Download index.txt
+	download($dir, 'index.txt', $mirror);
+
+	# Get opts and run
 	GetOptions(\%opts,
 		'download',
 		'list',
