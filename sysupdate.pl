@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.5 2025/04/29 17:52:49 lecorbeau Exp ian $
+# $Ragnarok: sysupdate.pl,v 1.6 2025/04/30 17:43:55 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -55,9 +55,8 @@ sub checkupdate {
 sub verify_sig {
 	my ($file) = @_;
 
-	# Use 'and' instead of 'or' because system() returns 'false' when it succeeds.
-	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file")
-		and die("Sig verification failed, exiting.");
+	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file") == 0
+		or die("Sig verification failed, exiting.");
 }
 
 # Download file as the 'sysupdate' user.
@@ -65,8 +64,8 @@ sub download {
 	my ($file, $source) = @_;
 
 	# Use lib/download script for the moment.
-	system('lib/download', "$destdir", "$file", "$source")
-		and die("Download failed: $!\n");
+	system('lib/download', "$destdir", "$file", "$source") == 0
+		or die("Download failed: $!\n");
 }
 
 # Should this be a subroutine? Perhaps not.
