@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.5 2025/04/29 17:52:49 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.5 2025/04/29 17:52:49 lecorbeau Exp ian $
 # 
 # sysupdate: update Ragnarok base system.
 
@@ -61,14 +61,12 @@ sub verify_sig {
 }
 
 # Download file as the 'sysupdate' user.
-# This is fugly, but we need to drop to an unprivileged user. I need
-# to further investigate how secure it is, but it sure is more secure
-# than downloading shit from the internet as root.
 sub download {
 	my ($file, $source) = @_;
 
-	system('/usr/bin/su', '-s', '/bin/sh', 'sysupdate', '-c', "/usr/bin/wget -q --show-progress -O $file $source/$file")
-		and die("Can't download file, exiting.");
+	# Use lib/download script for the moment.
+	system('lib/download', "$destdir", "$file", "$source")
+		and die("Download failed: $!\n");
 }
 
 # Should this be a subroutine? Perhaps not.
