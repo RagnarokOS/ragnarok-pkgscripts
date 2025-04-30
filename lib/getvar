@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+
+# $Ragnarok: getvar,v 1.2 2025/04/30 22:39:15 lecorbeau Exp $
+# Read a config value from config file.
+
+use strict;
+use warnings;
+use Config::Tiny;
+
+my ($section, $value, $conffile) = @ARGV;
+
+# Get values for the Ragnarok repo (default)
+my $config	= Config::Tiny->read($conffile);
+#my $mirror	= $config->{ragnarok}->{MIRROR};
+#my $pubkey	= $config->{ragnarok}->{PUBKEY};
+
+# Get values for local section if they are defined
+#my $local_mirror = undef;
+#my $local_pubkey = undef;
+#if(defined $config->{local}->{MIRROR}) {
+#	$local_mirror = $config->{local}->{MIRROR};
+#	$local_pubkey = $config->{local}->{PUBKEY};
+#}
+print("$config->{$section}->{$value}\n")
+	or die("Can't get config value: $!\n");
