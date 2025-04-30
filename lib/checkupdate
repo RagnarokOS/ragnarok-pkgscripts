@@ -1,0 +1,40 @@
+#!/usr/bin/env perl
+
+# $Ragnarok: checkupdate,v 1.1 2025/04/30 23:44:44 lecorbeau Exp $
+# Check if updates are available.
+
+use strict;
+use warnings;
+use List::Compare;
+
+my ($new_index, $index) = @ARGV;
+
+sub err {
+	my ($err) = @_;
+
+	die("Can't $err file: $!\n");
+}
+
+open(my $ni, '<', $new_index) or err("open");
+open(my $i, '<', $index) or err("open");
+
+my @new			= <$ni>;
+my @installed		= <$i>;
+
+my $list		= List::Compare->new(\@new, \@installed);
+my @intersection	= $list->get_intersection;
+my @updates;
+
+if (@intersection) {
+	@updates 	= $list->get_unique;
+}
+
+close($ni) or err("close");
+close($i) or err("close");
+
+if (@updates) {
+	print(@updates);
+	exit(0);
+} else {
+	exit(1);
+}
