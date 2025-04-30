@@ -1,0 +1,34 @@
+#!/bin/ksh
+
+# $Ragnarok: download,v 1.1 2025/04/30 14:39:34 lecorbeau Exp $
+# Download a file as an unprivileged user for a script that is executed
+# as root.
+
+_TMP=$1
+
+unpriv() {
+	local _file=$2 _ret=0 _user=sysupdate
+
+	if [[ $1 == -f && -n ${_file} ]]; then
+		# shellcheck disable=SC2188
+		>${_file}
+		chown "${_user}" "${_file}"
+		chmod 0711 "${_TMP}"
+		shift 2
+	fi
+	(($# >= 1))
+
+	su -s /bin/sh ${_user} -c "$@" || _ret=$?
+
+	[[ -n ${_file} ]] && chown root "${_file}"
+
+	return ${_ret}
+}
+
+dl() {
+	local _file=$2 _url=$3
+
+	unpriv -f "${_TMP}/${_file}" "wget -q --show-progress -O ${_TMP}/${_file} ${_url}/${_file}"
+}
+
+dl "$1" "$2" "$3"
