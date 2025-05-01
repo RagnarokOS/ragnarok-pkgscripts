@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.5 2025/05/01 15:31:54 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.6 2025/05/01 15:55:27 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -48,15 +48,16 @@ usage() {
 	printf '%s\n' "
 Options:
 
--d	download, but don't install, update specified as argument 1.
+-d	Download, but don't install, update specified as argument 1.
+	This is useful if you want to downgrade a specific package.
 
 -h	Show this help message.
+
+-i	Install an update previously downloaded using the -d argument.
 
 -l	List installed updates, if there are any.
 
 -q	Check if there are any updates available.
-
--r	Revert an update. Must supply name of program as argument 1.
 
 The most common operation is to run sysupdate with no option, which will
 download and install available binary updates.
@@ -89,6 +90,7 @@ unpriv() {
 get_file() {
 	local _file=$1
 
+	printf '%s\n' "Downloading ${_file}..."
 	unpriv -f "${TMP}/${_file}" "wget -q --show-progress -O ${TMP}/${_file} ${MIRROR}/${_file}"
 }
 
@@ -176,8 +178,6 @@ do_list() {
 # Check if updates are available.
 do_query() {
 	local _avail
-
-	check_update
 
 	set -A _avail -- "$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')"
 	printf '%s\n' "The following updates are available:
