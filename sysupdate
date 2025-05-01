@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.7 2025/05/01 18:24:59 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.8 2025/05/01 23:30:07 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -44,8 +44,8 @@ usage() {
 	printf '%s\n' "
 Options:
 
--d	Download, but don't install, update specified as argument 1.
-	This is useful if you want to downgrade a specific package.
+-d	Download, but don't install updates. This is useful if you want
+	to downgrade a specific package.
 
 -h	Show this help message.
 
@@ -180,9 +180,15 @@ do_download() {
 }
 
 # List installed update
-do_list() {
-	printf '%s\n' "The following updates are installed:"
-	cat "${UPDIR}/index.txt"
+list_installed() {
+	if [[ ! -f ${UPDIR}/index.txt ]]; then
+		printf '%s\n' "${UPDIR}/index.txt missing, no installed updates to list."
+		exit 1
+	else
+		printf '%s\n' "The following updates are installed:"
+		cat "${UPDIR}/index.txt"
+		exit 0
+	fi
 }
 
 # Check if updates are available.
@@ -200,33 +206,29 @@ cleanup() {
 trap 'cleanup' EXIT
 trap exit HUP INT TERM
 
-main() {
-	local _index _updates
+# Just list updates if arg 1 is -l.
+[[ $1 == -l ]] && list_installed
 
-	# Don't download index.txt if /var/db/sysupdate/index.txt.new exists.
-	if [[ ! -f ${UPDIR}/index.txt.new ]]; then
-		_dir="${TMP}"
-		_index="index.txt"
-		get_file "$_index"
-		get_file SHA256.sig
-	else
-		_dir="/var/db/sysupdate"
-		_index="index.txt.new"
-	fi
+# Don't download index.txt if /var/db/sysupdate/index.txt.new exists.
+if [[ ! -f ${UPDIR}/index.txt.new ]]; then
+	_dir="${TMP}"
+	_index="index.txt"
+	get_file "$_index"
+	get_file SHA256.sig
+else
+	_dir="/var/db/sysupdate"
+	_index="index.txt.new"
+fi
 
-	# Check index.txt's signature
-	(cd "$_dir" && check_sig "$_index")
+# Check index.txt's signature
+(cd "$_dir" && check_sig "$_index")
 
-	case "$1" in
-		-d)	do_download "$2"
-			;;
-		-h)	usage
-			;;
-		-l)	do_list
-			;;
-		-q)	do_query
-			;;
-		*)	do_update
-			;;
-	esac
-}
+case "$1" in
+	-d)	_install="false"
+		;;
+	-h)	usage
+		;;
+	-q)	_download="false"
+		;;
+esac
+
