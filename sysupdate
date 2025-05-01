@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.6 2025/05/01 15:55:27 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.7 2025/05/01 18:24:59 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -39,10 +39,6 @@ TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
 UPDIR="/var/db/sysupdate"
 MIRROR=$(getvar ragnarok MIRROR "$CONF")
 PUBKEY=$(getvar ragnarok PUBKEY "$CONF")
-
-# Safety net.
-# Set current directory so we can get back to it after cd'ing into TMP.
-CURDIR=$(pwd)
 
 usage() {
 	printf '%s\n' "
@@ -102,6 +98,20 @@ check_sig() {
 		echo "Signature verification failed. Exiting..."
 		exit 1
 	fi
+}
+
+# Extract tgz.
+extract_tgz() {
+	for _tarball in "$@"; do
+		tar xvf "$_tarball" -C "$UPDIR"
+	done
+}
+
+# Emerge command to install the updates.
+install_update() {
+	local _pdir=$1
+
+	PKGDIR="$_pdir" emerge -avuDN --with-bdeps=y --usepkgonly @world
 }
 
 # Check if there are any updates
@@ -179,10 +189,6 @@ do_list() {
 do_query() {
 	local _avail
 
-	set -A _avail -- "$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')"
-	printf '%s\n' "The following updates are available:
-${_avail[*]}
-"
 }
 
 # Cleanup after finish
@@ -194,15 +200,33 @@ cleanup() {
 trap 'cleanup' EXIT
 trap exit HUP INT TERM
 
-case "$1" in
-	-d)	do_download "$2"
-		;;
-	-h)	usage
-		;;
-	-l)	do_list
-		;;
-	-q)	do_query
-		;;
-	*)	do_update
-		;;
-esac
+main() {
+	local _index _updates
+
+	# Don't download index.txt if /var/db/sysupdate/index.txt.new exists.
+	if [[ ! -f ${UPDIR}/index.txt.new ]]; then
+		_dir="${TMP}"
+		_index="index.txt"
+		get_file "$_index"
+		get_file SHA256.sig
+	else
+		_dir="/var/db/sysupdate"
+		_index="index.txt.new"
+	fi
+
+	# Check index.txt's signature
+	(cd "$_dir" && check_sig "$_index")
+
+	case "$1" in
+		-d)	do_download "$2"
+			;;
+		-h)	usage
+			;;
+		-l)	do_list
+			;;
+		-q)	do_query
+			;;
+		*)	do_update
+			;;
+	esac
+}
