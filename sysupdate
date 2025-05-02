@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.8 2025/05/01 23:30:07 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.9 2025/05/02 16:17:09 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -114,71 +114,6 @@ install_update() {
 	PKGDIR="$_pdir" emerge -avuDN --with-bdeps=y --usepkgonly @world
 }
 
-# Check if there are any updates
-check_update() {
-	local _updates
-
-	# Fetch update file and verify its signature
-	get_file
-	check_sig "${TMP}/index.txt"
-
-	_updates=$(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')
-
-	# If there are no updates, exit and return 2
-	if [[ -z $_updates ]]; then
-		printf '%s\n' "No updates found"
-		exit 2
-	else
-		return 0
-	fi
-}
-
-do_update() {
-	local _patchdir _patches
-
-	# If index.txt doesn't exist yet, create it
-	[[ ! -f ${UPDIR}/index.txt ]] && touch "${UPDIR}/index.txt"
-
-	check_update
-
-	# shellcheck disable=SC2046	# We DO want word splitting.
-	set -A _patches -- $(diff "${UPDIR}/index.txt" "${TMP}/index.txt" | awk '/>/ { printf("%s ", $2) }')
-	printf '%s\n' "Downloading updates..." &&
-	for _patch in "${_patches[@]}"; do
-		get_upd "${_patch}.tgz"
-	done
-
-	for patch in "${_patches[@]}"; do
-		printf '%s\n' "Verifying $_patch signature"
-		check_sig "${TMP}/${_patch}.tgz"
-		printf '%s\n' "Installing ${_patch}..."
-		tar xvf "${TMP}/${_patch}.tgz" -C "${UPDIR}/"
-		export PKGDIR="${UPDIR}/${_patch}" && emerge -avuDN --usepkgonly --with-bdeps=y @world
-	done
-
-	# Copy the new sysupdate list to ${UPDIR}
-	printf '%s\n' "Updating ${UPDIR}/index.txt..."
-	cp "${TMP}/index.txt" "${UPDIR}/"
-	# Make sure the new list is owned by the sysupdate user
-	chown sysupdate:sysupdate "${UPDIR}/index.txt"
-
-	exit 0
-}
-
-# Download update but don't install it.
-do_download() {
-	local _pkg
-
-	get_file
-
-	_pkg=$(grep "$1" "${TMP}/index.txt")
-
-	get_upd "${_pkg}.tgz"
-
-	# move package to ${UPDIR}
-	unpriv "cp ${TMP}/${_pkg}.tgz ${UPDIR}/"
-}
-
 # List installed update
 list_installed() {
 	if [[ ! -f ${UPDIR}/index.txt ]]; then
@@ -191,12 +126,6 @@ list_installed() {
 	fi
 }
 
-# Check if updates are available.
-do_query() {
-	local _avail
-
-}
-
 # Cleanup after finish
 cleanup() {
 	set +e
@@ -206,8 +135,16 @@ cleanup() {
 trap 'cleanup' EXIT
 trap exit HUP INT TERM
 
-# Just list updates if arg 1 is -l.
-[[ $1 == -l ]] && list_installed
+case "$1" in
+	-d)	_install="false"
+		;;
+	-h)	usage
+		;;
+	-l)	list_installed
+		;;
+	-q)	_download="false"
+		;;
+esac
 
 # Don't download index.txt if /var/db/sysupdate/index.txt.new exists.
 if [[ ! -f ${UPDIR}/index.txt.new ]]; then
@@ -223,12 +160,32 @@ fi
 # Check index.txt's signature
 (cd "$_dir" && check_sig "$_index")
 
-case "$1" in
-	-d)	_install="false"
-		;;
-	-h)	usage
-		;;
-	-q)	_download="false"
-		;;
-esac
+# Check if updates are available
+set -A _updates -- $(checkupdate "$_index" "/var/db/sysupdate/index.txt")
 
+if [[ ${#_updates[@]} -eq 0 ]]; then
+	printf '%s\n' "No updates available."
+	exit 2
+fi
+
+# Exit if $1 was '-q'
+[[ $_download == false ]] && exit 0
+
+# Download updates and extract them if sig verification was successful
+printf '%s\n' "Downloading updates..."
+for _update in "${_updates[@]}"; do
+	get_file "$_update"
+	(cd "$_dir" && check_sig "$_update")
+	printf '%s\n' "Extracting $_update"
+	extract_tgz "$_update"
+done
+
+# Exit if $1 was -d
+[[ $_install == false ]] && exit 0
+
+# Install the updates
+for _update in "${_updates[@]}"; do
+	_updir="${_update%.tgz}"
+	printf '%s\n' "Installing $_update"
+	install_update "$_updir"
+done
