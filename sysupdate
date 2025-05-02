@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.9 2025/05/02 16:17:09 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.10 2025/05/02 16:20:06 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -185,7 +185,7 @@ done
 
 # Install the updates
 for _update in "${_updates[@]}"; do
-	_updir="${_update%.tgz}"
+	_updir="/var/db/sysupdate/${_update%.tgz}"
 	printf '%s\n' "Installing $_update"
 	install_update "$_updir"
 done
