@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_delete,v 1.2 2025/04/28 18:52:36 lecorbeau Exp $
+# $Ragnarok: pkg_delete,v 1.3 2025/05/10 17:15:23 lecorbeau Exp $
 # Remove package from the @local set
 
 set -A _pkgs -- "$@"
@@ -13,4 +13,4 @@ for _pkg in "${_pkgs[@]}"; do
 done
 
 # run --depclean against those packages.
-/usr/bin/emerge -av --depclean --pretend "${_pkgs[@]}"
+/usr/bin/emerge -av --depclean "${_pkgs[@]}"
