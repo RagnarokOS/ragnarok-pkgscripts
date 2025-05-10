@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.5 2025/04/18 17:57:31 lecorbeau Exp $
+# $Ragnarok: pkg_install,v 1.6 2025/05/10 17:17:42 lecorbeau Exp $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -10,7 +10,6 @@ inst_pkg() {
 	set -A _pkgs -- "$@"
 
 	# It's possible to just install the whole @local set in one go.
-	#if [[ ${#_pkgs[@]} == 0 ]]; then
 	if [[ ${_pkgs[*]} == @local ]]; then
     		/usr/bin/emerge -av --oneshot @local
 	else
