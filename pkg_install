@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.6 2025/05/10 17:17:42 lecorbeau Exp $
+# $Ragnarok: pkg_install,v 1.7 2025/05/29 18:34:32 lecorbeau Exp $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -28,10 +28,14 @@ upd_pkg() {
 	/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @local
 }
 
+# TODO: use getopts instead of case.
 case "$1" in
 	-p)	/usr/bin/emerge -av --oneshot --pretend "$@"
 		;;
 	-u)	upd_pkg
+		;;
+	-up|-pu)
+		/usr/bin/emerge -av --oneshot --pretend "$@"
 		;;
 	*)	inst_pkg "$@"
 		;;
