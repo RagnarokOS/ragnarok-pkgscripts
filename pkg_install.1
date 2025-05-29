@@ -10,6 +10,7 @@
 .Bk -words
 .Op Fl p
 .Op Fl u
+.Op Fl up
 .Op Ar pkg-name ...
 .Ek
 .Sh DESCRIPTION
@@ -38,11 +39,14 @@ will simply reinstall the package, whether an update is available or not.
 The options are as follows:
 .Bl -tag -width -Ds
 .It Fl p
-Instead of installing or updating, simply display what would
-have been installed if the install/update was actually performed.
+Pretends installing package (or @local) set. Useful to check a package's dependecies.
 .It Fl u
 If no
 .Ar pkg-name
 is specified as the second argument, update all packages. Otherwise, update
 .Ar pkg-name .
-.Ss Technical details
+.It Fl up
+Same as the
+.Ar p
+flag, but for updates.
+
