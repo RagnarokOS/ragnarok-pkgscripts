@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.7 2025/05/29 18:34:32 lecorbeau Exp $
+# $Ragnarok: pkg_install,v 1.8 2025/05/29 18:37:24 lecorbeau Exp $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -35,7 +35,7 @@ case "$1" in
 	-u)	upd_pkg
 		;;
 	-up|-pu)
-		/usr/bin/emerge -av --oneshot --pretend "$@"
+		/usr/bin/emerge -avuDN --with-bdeps=y --oneshot --pretend "$@"
 		;;
 	*)	inst_pkg "$@"
 		;;
