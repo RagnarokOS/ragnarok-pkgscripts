@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# $Ragnarok: mksysupdate,v 1.1 2025/06/03 14:34:38 lecorbeau Exp $
+# This is the tool Ragnarok uses to create and distribute sysupdate tarballs.
+
+_set=$1
+_date=$(date +"%Y%d%y%H%M%S")
+_dir="/sysupdate-${_date}"
+
+/usr/bin/mkdir -p "${_dir}"
+PKGDIR="${_dir}" /usr/bin/emerge -avuDN --with-bdeps=y "${_set}"
+/usr/bin/tar czpvf "${_dir}.tgz" "${_dir}"
+/usr/bin/sed -i "1 i\\${_dir}.tgz" /index.txt
