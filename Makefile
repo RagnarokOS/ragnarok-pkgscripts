@@ -1,10 +1,11 @@
-# $Ragnarok: Makefile,v 1.1 2025/05/31 18:52:14 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.2 2025/06/04 22:21:54 lecorbeau Exp $
 # Makefile for pkgscripts.
 
 SCRIPTS		= pkg_delete pkg_install sysclean
 MANPAGES	= pkg_install.1
 
-all: install
+all:
+	@echo "Nothing to do for all. Skipping..."
 
 install:
 	install -d ${DESTDIR}/usr/bin
