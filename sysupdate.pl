@@ -1,31 +1,27 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.7 2025/04/30 17:53:22 lecorbeau Exp $
+# $Ragnarok: sysupdate.pl,v 1.8 2025/06/04 22:40:15 lecorbeau Exp $
 # 
 # sysupdate: update Ragnarok base system.
 
 use strict;
 use warnings;
-use Config::Tiny;
+use Config::General;
 use List::Compare;
 use File::Temp qw(tempdir);
 use File::chdir;
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
 
-# Get values from updates.conf
-my $conffile	= 'updates.conf';
-my $config	= Config::Tiny->read($conffile);
-my $mirror	= $config->{ragnarok}->{MIRROR};
-my $pubkey	= $config->{ragnarok}->{PUBKEY};
-
-# Get values from local section if they are defined
-my $local_mirror = undef;
-my $local_pubkey = undef;
-if(defined $config->{local}->{MIRROR}) {
-	$local_mirror = $config->{local}->{MIRROR};
-	$local_pubkey = $config->{local}->{PUBKEY};
-}
+# Get values from sysupdate.conf
+my $conf	= Config::General->new(
+	-ConfigFile		=> '/etc/sysupdate.conf',
+	-SplitPolict		=> 'equalsign',
+	-InterPolateVars	=> 1
+);
+my %config	= $conf->getall;
+my $mirror	= $config{'MIRROR'};
+my $pubkey	= $config{'PUBKEY'};
 
 # Die on error. Instead of constaly writing "or die ...".
 sub err {
