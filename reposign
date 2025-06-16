@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# $Ragnarok: reposign,v 1.1 2025/06/16 16:07:26 lecorbeau Exp $
+# reposign: sign the .ebuild, metadata and Manifest in a repo using signify(1).
+# Usage: reposign <repodir> </path/to/key.sec>
+
+_repo=$1
+_seckey=$2
+_curdir=$(pwd)
+
+cd "$_repo" || exit
+for _file in $(find * -type f -name '*.ebuild' -o -name 'Manifest' -o -name 'metadata.xml' | while IFS='' read -r file; do echo "$file"; done); do
+	sha256sum --tag "$_file" >> SHA256
+done
+
+/usr/bin/signify -S -s "$_seckey" -m SHA256 -x SHA256.sig
+
+/usr/bin/cat SHA256 >> SHA256.sig
+
+/usr/bin/signify -C -p /etc/signify/ragnarok02.pub -x SHA256.sig
+
+cd "$_curdir" || exit
