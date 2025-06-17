@@ -1,16 +1,19 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: getvar,v 1.3 2025/04/30 22:43:21 lecorbeau Exp $
+# $Ragnarok: getvar,v 1.4 2025/06/17 15:29:18 lecorbeau Exp $
 # Read a config value from config file.
 
 use strict;
 use warnings;
-use Config::Tiny;
+use Config::General;
 
-my ($section, $value, $conffile) = @ARGV;
+my $value = $ARGV[0];
 
-# Get values for the Ragnarok repo (default)
-my $config	= Config::Tiny->read($conffile);
+my $conf	= Config::General->new(
+	-ConfigFile		=> 'sysupdate.conf',
+	-SplitPolicy		=> 'equalsign',
+	-InterPolateVars	=> 1
+);
 
-print("$config->{$section}->{$value}\n")
-	or die("Can't get config value: $!\n");
+my %config = $conf->getall;
+print("$config{$value}\n");
