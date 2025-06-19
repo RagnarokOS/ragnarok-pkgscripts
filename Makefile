@@ -1,7 +1,7 @@
-# $Ragnarok: Makefile,v 1.3 2025/06/13 16:28:54 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.4 2025/06/19 15:00:35 lecorbeau Exp $
 # Makefile for pkgscripts.
 
-SCRIPTS		= pkg_delete pkg_install sysclean
+SCRIPTS		= pkg_delete pkg_install sysclean mksysupdate reposign
 MANPAGES	= pkg_install.1
 
 # For the tarball
