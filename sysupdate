@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.10 2025/05/02 16:20:06 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.11 2025/06/21 18:54:10 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -36,9 +36,9 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$LIBPATH
 
 CONF="/etc/sysupdate.conf"
 TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
-UPDIR="/var/db/sysupdate"
-MIRROR=$(getvar ragnarok MIRROR "$CONF")
-PUBKEY=$(getvar ragnarok PUBKEY "$CONF")
+UPDIR=$(getvar DIR "$CONF")
+MIRROR=$(getvar MIRROR "$CONF")
+PUBKEY=$(getvar PUBKEY "$CONF")
 
 usage() {
 	printf '%s\n' "
@@ -109,9 +109,7 @@ extract_tgz() {
 
 # Emerge command to install the updates.
 install_update() {
-	local _pdir=$1
-
-	PKGDIR="$_pdir" emerge -avuDN --with-bdeps=y --usepkgonly @world
+	PKGDIR="$DIR" emerge -avuDN --with-bdeps=y --usepkgonly @world
 }
 
 # List installed update
@@ -187,5 +185,5 @@ done
 for _update in "${_updates[@]}"; do
 	_updir="/var/db/sysupdate/${_update%.tgz}"
 	printf '%s\n' "Installing $_update"
-	install_update "$_updir"
+	install_update
 done
