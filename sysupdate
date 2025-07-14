@@ -2,7 +2,7 @@
 
 # sysupdate: update Ragnarok base system. WORK IN PROGRESS.
 #
-# $Ragnarok: sysupdate,v 1.11 2025/06/21 18:54:10 lecorbeau Exp $
+# $Ragnarok: sysupdate,v 1.12 2025/07/14 16:30:30 lecorbeau Exp $
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #											#
@@ -34,9 +34,10 @@ else
 fi
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$LIBPATH
 
+UPDIR="/var/db/sysupdate"
 CONF="/etc/sysupdate.conf"
 TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
-UPDIR=$(getvar DIR "$CONF")
+PKGCACHEDIR=$(getvar DIR "$CONF")
 MIRROR=$(getvar MIRROR "$CONF")
 PUBKEY=$(getvar PUBKEY "$CONF")
 
@@ -107,9 +108,19 @@ extract_tgz() {
 	done
 }
 
+# Send packages to binhost (default: /var/cache/binpkgs) and rm sysupdate
+# directory.
+sync_pkgs() {
+	for _dir in "$@"; do
+		/usr/bin/rsync "${_dir}/" "${PKGCACHEDIR}/"
+		/usr/bin/rm -r "${_dir}"
+	done
+}
+
 # Emerge command to install the updates.
 install_update() {
-	PKGDIR="$DIR" emerge -avuDN --with-bdeps=y --usepkgonly @world
+	emaint -f binhost
+	emerge -avuDN --with-bdeps=y --usepkgonly @world
 }
 
 # List installed update
@@ -176,14 +187,12 @@ for _update in "${_updates[@]}"; do
 	(cd "$_dir" && check_sig "$_update")
 	printf '%s\n' "Extracting $_update"
 	extract_tgz "$_update"
+	sync_pkgs "${UPDIR}/${_update%.tgz}"
 done
 
 # Exit if $1 was -d
 [[ $_install == false ]] && exit 0
 
 # Install the updates
-for _update in "${_updates[@]}"; do
-	_updir="/var/db/sysupdate/${_update%.tgz}"
-	printf '%s\n' "Installing $_update"
-	install_update
-done
+printf '%s\n' "Performing base system update..."
+install_update
