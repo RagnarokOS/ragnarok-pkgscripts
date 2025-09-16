@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# $Ragnarok: pkg_install,v 1.8 2025/05/29 18:37:24 lecorbeau Exp $
+# $Ragnarok: pkg_install,v 1.10 2025/09/16 16:06:54 lecorbeau Exp $
 # Install or update "third party" package(s).
 
 # Install packages.
@@ -28,8 +28,32 @@ upd_pkg() {
 	/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @local
 }
 
+# Delete pkg(s)
+rm_pkg() {
+	local _pkgs
+
+	set -A _pkgs -- "$@"
+	
+	if [[ ${_pkgs[*]} -eq 0 ]]; then
+		printf '%s\n' "No package name provided..."
+		exit 1
+	fi
+
+	# shellcheck disable=SC2154
+	# Cleanup the set.
+	for _pkg in "${_pkgs[@]}"; do
+		sed -i	-e "s#${_pkg}##g" /etc/portage/sets/local
+		sed -i	-e'/^[[:space:]]*$/d' /etc/portage/sets/local
+	done
+
+	# run --depclean against those packages.
+	/usr/bin/emerge -av --depclean "${_pkgs[@]}"
+}
+
 # TODO: use getopts instead of case.
 case "$1" in
+	-d)	rm_pkg "$@"
+		;;
 	-p)	/usr/bin/emerge -av --oneshot --pretend "$@"
 		;;
 	-u)	upd_pkg

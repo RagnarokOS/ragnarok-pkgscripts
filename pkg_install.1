@@ -8,6 +8,7 @@
 .Sh SYNOPSIS
 .Nm pkg_install
 .Bk -words
+.Op Fl d
 .Op Fl p
 .Op Fl u
 .Op Fl up
@@ -38,6 +39,9 @@ will simply reinstall the package, whether an update is available or not.
 .Pp
 The options are as follows:
 .Bl -tag -width -Ds
+.It Fl d Ar pkg-name
+Delete/remove
+.Ar pkg-name .
 .It Fl p
 Pretends installing package (or @local) set. Useful to check a package's dependecies.
 .It Fl u
