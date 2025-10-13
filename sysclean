@@ -1,46 +1,25 @@
-#!/bin/ksh
+#!/usr/bin/perl
 
-# $Ragnarok: sysclean,v 1.5 2025/07/05 16:27:18 lecorbeau Exp $
-# Run --depclean, but make sure it ignores the files in the @local set.
+# $Ragnarok$
 
-dbclean() {
-	local _files _resp
-	
-	_files=$(find /var/db/sysupdate/ -type f -name '*.tgz')
+use strict;
+use warnings;
+use IPC::System::Simple qw(runx);
+use FindBin;
+use lib $FindBin::Bin;
+use PkgScripts::Emerge qw(emcmd);
 
-	printf '%s\n' "Checking sysupdate db for tarballs..."
-	# Skip if no files found.
-	[[ -z "$_files" ]] && printf '%s\n' "No archive found, skipping..." && return
+my $file	= '/etc/portage/sets/local';
+my @cmdargs	= @ARGV;
 
-	# If we're just pretending.
-	if [[ "$1" == "-p" ]]; then
-		printf '%s\n' "The following sysupdate archives would be removed:
+# Get list of packages in @local to exclude.
+open(my $fh, '<', $file)
+	or die("Can't open $file: $!\n");
+my $excluded	= do {
+	local $/ = undef;
+	<$fh>;
+};
+close($fh) or die("Can't close $file: $!\n");
 
-${_files}
-"
-		return
-	fi
-
-	# Else
-	read -r _resp?"The following sysupdate archives will be removed:
-
-${_files}
-
-Proceed? (Y/n): "
-
-	case "$_resp" in
-		Y|y)	for _f in ${_files}; do rm "${_f}"; done ;;
-		N|n)	echo "Not deleting archives. You may delete them at a later time if desired." ;;
-	esac
-}
-
-# Note, tried using an "_opts" variable instead of duplicating the whole,
-# command, but in didn't work.
-case "$1" in
-	-p)	dbclean "$1"
-		/usr/bin/emerge -av --pretend --exclude "$(/usr/bin/cat /etc/portage/sets/local | /usr/bin/xargs -d '\n')" --depclean
-		;;
-	*)	dbclean
-		/usr/bin/emerge -av --exclude "$(/usr/bin/cat /etc/portage/sets/local | /usr/bin/xargs -d '\n')" --depclean
-		;;
-esac
+$excluded =~ s/\s+/ /g;
+emcmd('-av', '--depclean', "--exclude=$excluded", @cmdargs);
