@@ -5,6 +5,9 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib $FindBin::Bin;
+use PkgScripts::Emerge qw(emcmd);
 
 my $pkgs	= @ARGV;
 
@@ -36,6 +39,6 @@ sub install_pkg {
 	foreach my $pkg (@pkgs) {
 		add_to_set($pkg);
 	}
-	system('/usr/bin/emerge', '-avuDU', '--with-bdeps=y', '--oneshot', "$pkgs") == 0
+	emcmd("$emerge_opts", '--oneshot', "$pkgs") == 0
 		or die("Can't install $pkgs: $!\n");
 }
