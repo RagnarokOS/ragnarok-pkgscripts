@@ -1,66 +1,41 @@
-#!/bin/ksh
+#!/usr/bin/env perl
 
-# $Ragnarok: pkg_install,v 1.10 2025/09/16 16:06:54 lecorbeau Exp $
-# Install or update "third party" package(s).
+# $Ragnarok$
+# pkg_install: install or update non-base system packages.
 
-# Install packages.
-inst_pkg() {
-	local _pkgs
+use strict;
+use warnings;
 
-	set -A _pkgs -- "$@"
+my $pkgs	= @ARGV;
 
-	# It's possible to just install the whole @local set in one go.
-	if [[ ${_pkgs[*]} == @local ]]; then
-    		/usr/bin/emerge -av --oneshot @local
-	else
-		for _pkg in "${_pkgs[@]}"; do
-			if ! grep -q "${_pkg}" /etc/portage/sets/local; then
-				printf '%s\n' "$_pkg" >> /etc/portage/sets/local
-			fi
-		done
+# Add pkg to @local set if it's not already there
+sub add_to_set {
+	my ($pkg)	= @ARGV;
+	my $set		= '/etc/portage/sets/local';
 
-		emerge -av --oneshot "${_pkgs[@]}"
-	fi
+	open(my $fh, '<', $set) or die("Can't open $set file: $!\n");
+	my $exists	= 0;
+	while(my $line = <$fh>) {
+		if ($line =~ /\Q$pkg\E/) {
+			$exists = 1;
+			last;
+		}
+	}
+	close($fh) or die("Can't close $set file: $!\n");
+
+	if ($exists) {
+		print("$pkg is already in $set file, reinstalling...\n");
+	} else {
+		open($fh, '>>', $set) or die("Can't add $pkg to $set\n");
+		print("$fh $pkg\n");
+		close($fh) or die("Can't close $set file: $!\n");
+	}
 }
 
-# Update pkgs.
-upd_pkg() {
-	/usr/bin/emerge -avuDN --with-bdeps=y --oneshot @local
+sub install_pkg {
+	foreach my $pkg (@pkgs) {
+		add_to_set($pkg);
+	}
+	system('/usr/bin/emerge', '-avuDU', '--with-bdeps=y', '--oneshot', "$pkgs") == 0
+		or die("Can't install $pkgs: $!\n");
 }
-
-# Delete pkg(s)
-rm_pkg() {
-	local _pkgs
-
-	set -A _pkgs -- "$@"
-	
-	if [[ ${_pkgs[*]} -eq 0 ]]; then
-		printf '%s\n' "No package name provided..."
-		exit 1
-	fi
-
-	# shellcheck disable=SC2154
-	# Cleanup the set.
-	for _pkg in "${_pkgs[@]}"; do
-		sed -i	-e "s#${_pkg}##g" /etc/portage/sets/local
-		sed -i	-e'/^[[:space:]]*$/d' /etc/portage/sets/local
-	done
-
-	# run --depclean against those packages.
-	/usr/bin/emerge -av --depclean "${_pkgs[@]}"
-}
-
-# TODO: use getopts instead of case.
-case "$1" in
-	-d)	rm_pkg "$@"
-		;;
-	-p)	/usr/bin/emerge -av --oneshot --pretend "$@"
-		;;
-	-u)	upd_pkg
-		;;
-	-up|-pu)
-		/usr/bin/emerge -avuDN --with-bdeps=y --oneshot --pretend "$@"
-		;;
-	*)	inst_pkg "$@"
-		;;
-esac
