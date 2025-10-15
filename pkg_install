@@ -8,13 +8,14 @@ use warnings;
 use FindBin;
 use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
+use PkgScripts::Config qw($emerge_opts $set_name);
 
 my $pkgs	= @ARGV;
 
 # Add pkg to @local set if it's not already there
 sub add_to_set {
-	my ($pkg)	= @ARGV;
-	my $set		= '/etc/portage/sets/local';
+	my ($pkg)	= @_;
+	my $set		= "/etc/portage/sets/$set_name";
 
 	open(my $fh, '<', $set) or die("Can't open $set file: $!\n");
 	my $exists	= 0;
@@ -36,6 +37,8 @@ sub add_to_set {
 }
 
 sub install_pkg {
+	my (@pkgs)	= @_;
+
 	foreach my $pkg (@pkgs) {
 		add_to_set($pkg);
 	}

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config::General;
 use Exporter 'import';
-our @EXPORT_OK = qw($emerge_opts $setname);
+our @EXPORT_OK = qw($emerge_opts $set_name);
 
 # Change to /etc/pkgscripts.conf when ready
 my $conffile	= 'pkgscripts.conf';
