@@ -10,12 +10,18 @@ use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
 use PkgScripts::Config qw($emerge_opts $set_name);
 
-my $pkgs	= @ARGV;
+my @pkgs	= @ARGV;
 
 # Add pkg to @local set if it's not already there
 sub add_to_set {
 	my ($pkg)	= @_;
 	my $set		= "/etc/portage/sets/$set_name";
+
+	# Create the set file if it doesn't already exist
+	if (! -f $set) {
+		open(my $sf, '>', $set) or die("Can't open $set for reading: $!\n");
+		close($sf);
+	}
 
 	open(my $fh, '<', $set) or die("Can't open $set file: $!\n");
 	my $exists	= 0;
@@ -31,7 +37,7 @@ sub add_to_set {
 		print("$pkg is already in $set file, reinstalling...\n");
 	} else {
 		open($fh, '>>', $set) or die("Can't add $pkg to $set\n");
-		print("$fh $pkg\n");
+		print($fh "$pkg\n");
 		close($fh) or die("Can't close $set file: $!\n");
 	}
 }
