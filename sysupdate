@@ -1,198 +1,98 @@
-#!/bin/ksh
+#!/usr/bin/env perl
 
-# sysupdate: update Ragnarok base system. WORK IN PROGRESS.
-#
-# $Ragnarok: sysupdate,v 1.12 2025/07/14 16:30:30 lecorbeau Exp $
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#											#
-#	Copyright (c) 2023, Ian LeCorbeau <I-LeCorbeau (at) protonmail (dot) com>	#
-#											#
-#	Permission to use, copy, modify, and/or distribute this software for any	#
-#	purpose with or without fee is hereby granted, provided that the above		#
-#	copyright notice and this permission notice appear in all copies.		#
-#											#
-#	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES	#
-#	WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF		#
-#	MERCHANTABILITY AND FITNESS IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR		#
-#	ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES		#
-#	WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN		#
-#	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF		#
-#	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.			#
-#											#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# $Ragnarok: sysupdate.pl,v 1.8 2025/06/04 22:40:15 lecorbeau Exp $
+# 
+# sysupdate: update Ragnarok base system.
 
-set -e
-umask 0022
+use strict;
+use warnings;
+use Config::General;
+use List::Compare;
+use File::Temp qw(tempdir);
+use File::chdir;
+use Getopt::Long;
+Getopt::Long::Configure('pass_through');
 
-# If /usr/lib/ragnarok/sysupdate are not on the system, then set
-# LIBPATH to lib/ (ie this repo's lib dir).
-if [[ ! -d /usr/lib/ragnarok/sysupdate ]]; then
-	LIBPATH="lib"
-else
-	LIBPATH="/usr/lib/ragnarok/sysupdate"
-fi
-export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$LIBPATH
+# Get values from sysupdate.conf
+my $conf	= Config::General->new(
+	-ConfigFile		=> '/etc/sysupdate.conf',
+	-SplitPolict		=> 'equalsign',
+	-InterPolateVars	=> 1
+);
+my %config	= $conf->getall;
+my $mirror	= $config{'MIRROR'};
+my $pubkey	= $config{'PUBKEY'};
 
-UPDIR="/var/db/sysupdate"
-CONF="/etc/sysupdate.conf"
-TMP=$(mktemp -d -p /tmp sysupdate.XXXXXXXXXX)
-PKGCACHEDIR=$(getvar DIR "$CONF")
-MIRROR=$(getvar MIRROR "$CONF")
-PUBKEY=$(getvar PUBKEY "$CONF")
+# Die on error. Instead of constaly writing "or die ...".
+sub err {
+	my ($err) = @_;
 
-usage() {
-	printf '%s\n' "
-Options:
-
--d	Download, but don't install updates. This is useful if you want
-	to downgrade a specific package.
-
--h	Show this help message.
-
--i	Install an update previously downloaded using the -d argument.
-
--l	List installed updates, if there are any.
-
--q	Check if there are any updates available.
-
-The most common operation is to run sysupdate with no option, which will
-download and install available binary updates.
-"
+	die("Can't $err file: $!");
 }
 
-# Never download stuff from the internet as the root user
-# I take no credit for this function. All credit goes to
-# Antoine Jacoutot, who wrote OpenBSD's syspatch(1).
-unpriv() {
-	local _file=$2 _ret=0 _user=sysupdate
+# Check if updates are found.
+sub checkupdate {
+	open(my $f1, '<', "index.txt") or err("open");
+	open(my $f2, '<', "index.orig.txt") or err("open");
 
-	if [[ $1 == -f && -n ${_file} ]]; then
-		# shellcheck disable=SC2188
-		>${_file}
-		chown "${_user}" "${_file}"
-		chmod 0711 "${TMP}"
-		shift 2
-	fi
-	(($# >= 1))
+	my @orig = <$f1>;
+	my @new = <$f2>;
 
-	su -s /bin/sh ${_user} -c "$@" || _ret=$?
+	my $list = List::Compare->new(\@orig, \@new);
+	my @intersection = $list->get_intersection;
 
-	[[ -n ${_file} ]] && chown root "${_file}"
-
-	return ${_ret}
+	if (!@intersection) {
+		print("No updates found\n");
+	} else {
+		my @updates = $list->get_unique;
+		return @updates;
+	}
+	close($f1) or err("close");
+	close($f2) or err("close");
 }
 
-# Download file from mirror
-get_file() {
-	local _file=$1
+# Verify a file sig with signify(1)
+sub verify_sig {
+	my ($file) = @_;
 
-	printf '%s\n' "Downloading ${_file}..."
-	unpriv -f "${TMP}/${_file}" "wget -q --show-progress -O ${TMP}/${_file} ${MIRROR}/${_file}"
+	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file") == 0
+		or die("Sig verification failed, exiting.");
 }
 
-# Verify a file's signature. If signify returns a non-zero exit status, abort
-check_sig() {
-	local _file="$1"
+# Download file as the 'sysupdate' user.
+sub download {
+	my ($file, $source) = @_;
 
-	if ! /usr/bin/signify -C -p "$PUBKEY" -x SHA256.sig "$_file"; then
-		echo "Signature verification failed. Exiting..."
-		exit 1
-	fi
+	# Use lib/download script for the moment.
+	system('lib/download', "$destdir", "$file", "$source") == 0
+		or die("Download failed: $!\n");
 }
 
-# Extract tgz.
-extract_tgz() {
-	for _tarball in "$@"; do
-		tar xvf "$_tarball" -C "$UPDIR"
-	done
+# Should this be a subroutine? Perhaps not.
+sub main {
+	my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
+	my $update_dir	= '/var/db/sysupdate';
+	my %opts;
+
+	# Download index.txt
+	download($dir, 'index.txt', $mirror);
+
+	# Get opts and run
+	GetOptions(\%opts,
+		'download',
+		'list',
+		'query',
+	);
+
+	# The flags are mutually exclusive.
+	if ($opts{'download'}) {
+		# handle downloading updates
+	} elsif ($opts{'list'}) {
+		# handle listing installed updates
+	} elsif ($opts{'query'}) {
+		# handle checking if updates are available
+	} else {
+		# handle the default: download and install updates
+	}
 }
-
-# Send packages to binhost (default: /var/cache/binpkgs) and rm sysupdate
-# directory.
-sync_pkgs() {
-	for _dir in "$@"; do
-		/usr/bin/rsync "${_dir}/" "${PKGCACHEDIR}/"
-		/usr/bin/rm -r "${_dir}"
-	done
-}
-
-# Emerge command to install the updates.
-install_update() {
-	emaint -f binhost
-	emerge -avuDN --with-bdeps=y --usepkgonly @world
-}
-
-# List installed update
-list_installed() {
-	if [[ ! -f ${UPDIR}/index.txt ]]; then
-		printf '%s\n' "${UPDIR}/index.txt missing, no installed updates to list."
-		exit 1
-	else
-		printf '%s\n' "The following updates are installed:"
-		cat "${UPDIR}/index.txt"
-		exit 0
-	fi
-}
-
-# Cleanup after finish
-cleanup() {
-	set +e
-	rm -rf "${TMP}"
-}
-
-trap 'cleanup' EXIT
-trap exit HUP INT TERM
-
-case "$1" in
-	-d)	_install="false"
-		;;
-	-h)	usage
-		;;
-	-l)	list_installed
-		;;
-	-q)	_download="false"
-		;;
-esac
-
-# Don't download index.txt if /var/db/sysupdate/index.txt.new exists.
-if [[ ! -f ${UPDIR}/index.txt.new ]]; then
-	_dir="${TMP}"
-	_index="index.txt"
-	get_file "$_index"
-	get_file SHA256.sig
-else
-	_dir="/var/db/sysupdate"
-	_index="index.txt.new"
-fi
-
-# Check index.txt's signature
-(cd "$_dir" && check_sig "$_index")
-
-# Check if updates are available
-set -A _updates -- $(checkupdate "$_index" "/var/db/sysupdate/index.txt")
-
-if [[ ${#_updates[@]} -eq 0 ]]; then
-	printf '%s\n' "No updates available."
-	exit 2
-fi
-
-# Exit if $1 was '-q'
-[[ $_download == false ]] && exit 0
-
-# Download updates and extract them if sig verification was successful
-printf '%s\n' "Downloading updates..."
-for _update in "${_updates[@]}"; do
-	get_file "$_update"
-	(cd "$_dir" && check_sig "$_update")
-	printf '%s\n' "Extracting $_update"
-	extract_tgz "$_update"
-	sync_pkgs "${UPDIR}/${_update%.tgz}"
-done
-
-# Exit if $1 was -d
-[[ $_install == false ]] && exit 0
-
-# Install the updates
-printf '%s\n' "Performing base system update..."
-install_update
+main

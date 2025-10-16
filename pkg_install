@@ -70,6 +70,13 @@ sub install_pkg {
 	foreach my $pkg (@pkgs) {
 		add_to_set($pkg);
 	}
-	emcmd("$emerge_opts", '--oneshot', "@pkgs") == 0
-		or die("Can't install @pkgs: $!\n");
+	emcmd("$emerge_opts", '--oneshot', "@pkgs");
+}
+
+sub update_pkg {
+	if (@_) {
+		emcmd('-av', '--oneshot', "@_");
+	} else {
+		emcmd("$emerge_opts", '--oneshot', "\@$set_name");
+	}
 }
