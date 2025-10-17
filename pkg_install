@@ -6,11 +6,10 @@
 use strict;
 use warnings;
 use FindBin;
+use Getopt::Std;
 use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
 use PkgScripts::Config qw($emerge_opts $set_name);
-
-my @pkgs	= @ARGV;
 
 # Add pkg to @local set if it's not already there
 sub add_to_set {
@@ -79,4 +78,19 @@ sub update_pkg {
 	} else {
 		emcmd("$emerge_opts", '--oneshot', "\@$set_name");
 	}
+}
+
+my %opts;
+getopts('ru', \%opts) or die("Wrong option\n");
+
+# Default is no opts.
+if (!%opts) {
+	install_pkg(@ARGV);
+} else {
+	if ($opts{r}) {
+		rm_pkg(@ARGV);
+	}
+	if ($opts{u}) {
+		update_pkg(@ARGV);
+	} 
 }
