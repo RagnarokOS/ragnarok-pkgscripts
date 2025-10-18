@@ -1,13 +1,39 @@
-#!/bin/sh
+#!/usr/bin/env perl
 
-# $Ragnarok: mksysupdate,v 1.1 2025/06/03 14:34:38 lecorbeau Exp $
-# This is the tool Ragnarok uses to create and distribute sysupdate tarballs.
+# $Ragnarok$
+# Create a sysupdate.
 
-_set=$1
-_date=$(date +"%Y%d%y%H%M%S")
-_dir="/sysupdate-${_date}"
+use strict;
+use warnings;
+use IPC::System::Simple qw(runx);
+use POSIX qw(strftime);
+use FindBin;
+use lib $FindBin::Bin;
+use PkgScripts::Emerge qw(emcmd);
 
-/usr/bin/mkdir -p "${_dir}"
-PKGDIR="${_dir}" /usr/bin/emerge -avuDN --with-bdeps=y "${_set}"
-/usr/bin/tar czpvf "${_dir}.tgz" "${_dir}"
-/usr/bin/sed -i "1 i\\${_dir}.tgz" /index.txt
+my $date	= strftime('%Y%m%d%H%M%S', localtime);
+my $dir		= "sysupdate-$date";
+my $index	= 'index.txt';
+
+mkdir("$dir");
+emcmd("PKGDIR=$dir", '-avuDU', '--with-bdeps=y', '@world');
+runx('/usr/bin/tar', 'cpPJvf', "$dir.tar.xz", "$dir");
+
+# Create index.txt if it doesn't already exist
+if (! -f $index) {
+	open(my $in, '>', $index) or die("Can't open $index for reading: $!\n");
+	close($in);
+}
+
+open(my $fh, '<', $index) or die("Can't open $index for reading: $!\n");
+open(my $tfh, '>', $index.tmp) or die("Can't open $index.tmp file for writing: $!\n");
+
+print($tfh "$dir.tar.xz\n");
+while (my $line = <$fh>) {
+	print($tfh $line);
+}
+
+close($fh) or die("Can't close $index: $!\n");
+close($tfh) or die("Can't close $index.tmp: $!\n");
+
+rename("$index.tmp", $index) or die("Can't rename $index.tmp: $!\n");
