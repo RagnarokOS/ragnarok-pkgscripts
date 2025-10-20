@@ -9,6 +9,7 @@ use warnings;
 use Config::General;
 use IPC::System::Simple qw(runx);
 use List::Compare;
+use File::Copy;
 use File::Temp qw(tempdir);
 use File::chdir;
 use Getopt::Long;
@@ -16,8 +17,8 @@ Getopt::Long::Configure('pass_through');
 
 # Get values from sysupdate.conf
 my $conf	= Config::General->new(
-	-ConfigFile		=> '/etc/sysupdate.conf',
-	-SplitPolict		=> 'equalsign',
+	-ConfigFile		=> 'sysupdate.conf',
+	-SplitPolicy		=> 'equalsign',
 	-InterPolateVars	=> 1
 );
 my %config	= $conf->getall;
@@ -83,10 +84,19 @@ sub download {
 sub main {
 	my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
 	my $update_dir	= '/var/db/sysupdate';
+	my @updates;
 	my %opts;
 
 	# Download index.txt
 	download($dir, 'index.txt', $mirror);
+
+	# Exit early if no updates are found
+	if (!checkupdate()) {
+		print("No updates...\n");
+		exit(0);
+	} else {
+		@updates = checkupdate();
+	}
 
 	# Get opts and run
 	GetOptions(\%opts,
