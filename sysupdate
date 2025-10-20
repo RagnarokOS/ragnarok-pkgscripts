@@ -24,6 +24,8 @@ my $conf	= Config::General->new(
 my %config	= $conf->getall;
 my $mirror	= $config{'MIRROR'};
 my $pubkey	= $config{'PUBKEY'};
+my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
+my $update_dir	= '/var/db/sysupdate';
 
 # Die on error. Instead of constaly writing "or die ...".
 sub err {
@@ -80,10 +82,20 @@ sub download {
 	runcmd('lib/download', "$destdir", "$file", "$source");
 }
 
+# Download and verify archives
+sub get_update {
+	my @archives	= @_;
+
+	foreach my $archive (@archives) {
+		download('/var/db/sysupdate', $archive, $mirror);
+		if (verify_sig($archive)) {
+			move("$dir/$archive", "$update_dir/$archive");
+		}
+	}
+}
+
 # Should this be a subroutine? Perhaps not.
 sub main {
-	my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
-	my $update_dir	= '/var/db/sysupdate';
 	my @updates;
 	my %opts;
 
@@ -92,7 +104,7 @@ sub main {
 
 	# Exit early if no updates are found
 	if (!checkupdate()) {
-		print("No updates...\n");
+		print("No updates found, exiting...\n");
 		exit(0);
 	} else {
 		@updates = checkupdate();
@@ -107,11 +119,11 @@ sub main {
 
 	# The flags are mutually exclusive.
 	if ($opts{'download'}) {
-		# handle downloading updates
+		get_update(@updates);
 	} elsif ($opts{'list'}) {
 		# handle listing installed updates
 	} elsif ($opts{'query'}) {
-		# handle checking if updates are available
+		print(@updates);
 	} else {
 		# handle the default: download and install updates
 	}
