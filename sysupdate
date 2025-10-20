@@ -1,12 +1,13 @@
 #!/usr/bin/env perl
 
-# $Ragnarok: sysupdate.pl,v 1.8 2025/06/04 22:40:15 lecorbeau Exp $
+# $Ragnarok$
 # 
 # sysupdate: update Ragnarok base system.
 
 use strict;
 use warnings;
 use Config::General;
+use IPC::System::Simple qw(runx);
 use List::Compare;
 use File::Temp qw(tempdir);
 use File::chdir;
@@ -28,6 +29,18 @@ sub err {
 	my ($err) = @_;
 
 	die("Can't $err file: $!");
+}
+
+# Wrapper around runx.
+sub runcmd {
+	my ($cmd, @args)	= @_;
+
+	eval {
+		runx($cmd, @args);
+	};
+	if ($@) {
+		print("Can't run $cmd: $@\n");
+	}
 }
 
 # Check if updates are found.
@@ -55,17 +68,15 @@ sub checkupdate {
 sub verify_sig {
 	my ($file) = @_;
 
-	system('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file") == 0
-		or die("Sig verification failed, exiting.");
+	runcmd('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file");
 }
 
 # Download file as the 'sysupdate' user.
 sub download {
-	my ($file, $source) = @_;
+	my ($destdir, $file, $source) = @_;
 
 	# Use lib/download script for the moment.
-	system('lib/download', "$destdir", "$file", "$source") == 0
-		or die("Download failed: $!\n");
+	runcmd('lib/download', "$destdir", "$file", "$source");
 }
 
 # Should this be a subroutine? Perhaps not.
