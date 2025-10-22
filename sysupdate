@@ -94,10 +94,21 @@ sub get_update {
 	}
 }
 
+sub list_updates {
+	print("Installed Updates:\n");
+	open(my $fh, '<', "index.txt") or die("Can't open sysupdate file: $!\n");
+	while (my $line = <$fh>) {
+		print($line);
+	}
+	close($fh) or die("Can't close sysupdate file: $!\n");
+}
+
 # Should this be a subroutine? Perhaps not.
 sub main {
 	my @updates;
 	my %opts;
+
+	# TODO: reorganize this. 'list' shouldn't require downloading index.txt.
 
 	# Download index.txt
 	download($dir, 'index.txt', $mirror);
@@ -121,7 +132,7 @@ sub main {
 	if ($opts{'download'}) {
 		get_update(@updates);
 	} elsif ($opts{'list'}) {
-		# handle listing installed updates
+		list_updates();
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
