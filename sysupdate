@@ -24,6 +24,7 @@ my $conf	= Config::General->new(
 my %config	= $conf->getall;
 my $mirror	= $config{'MIRROR'};
 my $pubkey	= $config{'PUBKEY'};
+my $pkg_dir	= $config{'PKG_DIR'};
 my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
 my $update_dir	= '/var/db/sysupdate';
 
