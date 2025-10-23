@@ -102,6 +102,21 @@ sub get_update {
 	}
 }
 
+# Extract sysupdate archive
+#sub extract {
+#}
+
+# Use rsync to send packages to PKGDIR, then fix Packages file
+sub sync_pkgs {
+	my @dirs	= @_;
+	my @sorted	= sort { $a cmp $b } @dirs;
+
+	foreach my $dir (@sorted) {
+		runcmd('/usr/bin/rsync', '-Klrv', "$dir/", "$pkg_dir/");
+	}
+	runcmd('/usr/bin/emaint', '-f', 'binhost');
+}
+
 # Should this be a subroutine? Perhaps not.
 sub main {
 	my @updates;
