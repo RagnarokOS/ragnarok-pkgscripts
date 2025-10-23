@@ -57,9 +57,7 @@ sub checkupdate {
 	my $list = List::Compare->new(\@orig, \@new);
 	my @intersection = $list->get_intersection;
 
-	if (!@intersection) {
-		print("No updates found\n");
-	} else {
+	if (@intersection) {
 		my @updates = $list->get_unique;
 		return @updates;
 	}
