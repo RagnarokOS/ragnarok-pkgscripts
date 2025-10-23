@@ -80,6 +80,16 @@ sub download {
 	runcmd('lib/download', "$destdir", "$file", "$source");
 }
 
+# List installed updates
+sub list_updates {
+	print("Installed Updates:\n");
+	open(my $fh, '<', "index.txt") or die("Can't open sysupdate file: $!\n");
+	while (my $line = <$fh>) {
+		print($line);
+	}
+	close($fh) or die("Can't close sysupdate file: $!\n");
+}
+
 # Download and verify archives
 sub get_update {
 	my @archives	= @_;
@@ -92,21 +102,22 @@ sub get_update {
 	}
 }
 
-sub list_updates {
-	print("Installed Updates:\n");
-	open(my $fh, '<', "index.txt") or die("Can't open sysupdate file: $!\n");
-	while (my $line = <$fh>) {
-		print($line);
-	}
-	close($fh) or die("Can't close sysupdate file: $!\n");
-}
-
 # Should this be a subroutine? Perhaps not.
 sub main {
 	my @updates;
 	my %opts;
 
-	# TODO: reorganize this. 'list' shouldn't require downloading index.txt.
+	# Get opts and run
+	GetOptions(\%opts,
+		'download',
+		'list',
+		'query',
+	);
+
+	if ($opts{'list'}) {
+		list_updates();
+		exit(0);
+	}
 
 	# Download index.txt
 	download($dir, 'index.txt', $mirror);
@@ -119,18 +130,9 @@ sub main {
 		@updates = checkupdate();
 	}
 
-	# Get opts and run
-	GetOptions(\%opts,
-		'download',
-		'list',
-		'query',
-	);
-
 	# The flags are mutually exclusive.
 	if ($opts{'download'}) {
 		get_update(@updates);
-	} elsif ($opts{'list'}) {
-		list_updates();
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
