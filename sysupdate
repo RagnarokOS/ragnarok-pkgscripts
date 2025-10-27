@@ -112,8 +112,8 @@ sub sync_pkgs {
 	my @dirs	= @_;
 	my @sorted	= sort { $a cmp $b } @dirs;
 
-	# TODO: remove .tar.xz from @sorted before running rsync
 	foreach my $dir (@sorted) {
+		$dir =~ s/\.tar\.xz$//i;
 		runcmd('/usr/bin/rsync', '-Klrv', "$dir/", "$pkg_dir/");
 	}
 	runcmd('/usr/bin/emaint', '-f', 'binhost');
