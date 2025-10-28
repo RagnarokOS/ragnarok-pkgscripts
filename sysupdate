@@ -49,7 +49,9 @@ sub runcmd {
 
 # Check if updates are found.
 sub checkupdate {
-	open(my $f1, '<', "index.txt") or err("open");
+	my $index	= @_;
+
+	open(my $f1, '<', $index) or err("open");
 	open(my $f2, '<', "index.orig.txt") or err("open");
 
 	my @orig = <$f1>;
@@ -145,11 +147,11 @@ sub main {
 	download($dir, 'index.txt', $mirror);
 
 	# Exit early if no updates are found
-	if (!checkupdate()) {
+	if (!checkupdate("$dir/index.txt")) {
 		print("No updates found, exiting...\n");
 		exit(0);
 	} else {
-		@updates = checkupdate();
+		@updates = checkupdate("$dir/index.txt");
 	}
 
 	# The flags are mutually exclusive.
