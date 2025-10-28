@@ -35,6 +35,13 @@ sub err {
 	die("Can't $err file: $!");
 }
 
+# Convenience
+sub msg {
+	my $msg	= @_;
+
+	print("$msg\n");
+}
+
 # Wrapper around runx.
 sub runcmd {
 	my ($cmd, @args)	= @_;
@@ -98,7 +105,7 @@ sub get_update {
 	my @archives	= @_;
 
 	foreach my $archive (@archives) {
-		download('/var/db/sysupdate', $archive, $mirror);
+		download($dir, $archive, $mirror);
 		if (verify_sig($archive)) {
 			move("$dir/$archive", "$update_dir/$archive");
 		}
@@ -114,9 +121,9 @@ sub sync_pkgs {
 	my @dirs	= @_;
 	my @sorted	= sort { $a cmp $b } @dirs;
 
-	foreach my $dir (@sorted) {
-		$dir =~ s/\.tar\.xz$//i;
-		runcmd('/usr/bin/rsync', '-Klrv', "$dir/", "$pkg_dir/");
+	foreach my $updir (@sorted) {
+		$updir =~ s/\.tar\.xz$//i;
+		runcmd('/usr/bin/rsync', '-Klrv', "$updir/", "$pkg_dir/");
 	}
 	runcmd('/usr/bin/emaint', '-f', 'binhost');
 }
