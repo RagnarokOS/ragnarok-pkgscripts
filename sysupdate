@@ -121,9 +121,23 @@ sub sync_pkgs {
 	runcmd('/usr/bin/emaint', '-f', 'binhost');
 }
 
-#sub install_updates {
-#	my @updates	= @_;
-#}
+sub install_updates {
+	my @updates;
+
+	if (!checkupdate("/var/db/sysupdate/index.txt.tmp")) {
+		print("No downloaded sysupdate archives found, exiting...\n");
+		exit(0);
+	} else {
+		@updates = checkupdate("$dir/index.txt");
+	}
+
+	foreach my $update (@updates) {
+		extract($update);
+		sync_pkgs($update);
+	}
+
+	# run emerge command here
+}
 
 # Should this be a subroutine? Perhaps not.
 sub main {
@@ -157,6 +171,7 @@ sub main {
 	# The flags are mutually exclusive.
 	if ($opts{'download'}) {
 		get_update(@updates);
+		move("$dir/index.txt", "/var/db/sysupdate/index.txt.tmp");
 	} elsif ($opts{'install'}) {
 		# handle installing pre-downloaded sysupdates
 	} elsif ($opts{'query'}) {
