@@ -79,6 +79,7 @@ sub checkupdate {
 sub verify_sig {
 	my ($file) = @_;
 
+	msg("Verifying $file\'s signature...");
 	runcmd('/usr/bin/signify', "-C", "-p", "$pubkey", "-x", "SHA256.sig", "$file");
 }
 
@@ -92,7 +93,7 @@ sub download {
 
 # List installed updates
 sub list_updates {
-	print("Installed Updates:\n");
+	msg("Installed Updates:");
 	open(my $fh, '<', "index.txt") or die("Can't open sysupdate file: $!\n");
 	while (my $line = <$fh>) {
 		print($line);
@@ -104,6 +105,7 @@ sub list_updates {
 sub get_update {
 	my @archives	= @_;
 
+	msg("Downloading updates...");
 	foreach my $archive (@archives) {
 		download($dir, $archive, $mirror);
 		if (verify_sig($archive)) {
@@ -165,11 +167,12 @@ sub main {
 	}
 
 	# Download index.txt
+	msg("Downloading update index...");
 	download($dir, 'index.txt', $mirror);
 
 	# Exit early if no updates are found
 	if (!checkupdate("$dir/index.txt")) {
-		print("No updates found, exiting...\n");
+		msg("No updates found, exiting...");
 		exit(0);
 	} else {
 		@updates = checkupdate("$dir/index.txt");
