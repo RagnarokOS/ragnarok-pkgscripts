@@ -115,14 +115,18 @@ sub get_update {
 }
 
 # Extract sysupdate archive
-#sub extract {
-#}
+sub extract {
+	my $archive	= @_;
+
+	runcmd('/usr/bin/tar', "/var/db/sysupdate/$archive", '-C', '/var/db/sysupdate/');
+}
 
 # Use rsync to send packages to PKGDIR, then fix Packages file
 sub sync_pkgs {
 	my @dirs	= @_;
 	my @sorted	= sort { $a cmp $b } @dirs;
 
+	# TODO: move this to install_updates or anything more appropriate
 	foreach my $updir (@sorted) {
 		$updir =~ s/\.tar\.xz$//i;
 		runcmd('/usr/bin/rsync', '-Klrv', "$updir/", "$pkg_dir/");
