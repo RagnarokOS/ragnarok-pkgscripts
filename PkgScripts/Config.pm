@@ -20,5 +20,8 @@ my $conf 	= Config::General->new(
 );
 
 my %config		= $conf->getall;
+our $mirror		= $config{'MIRROR'};
+our $pubkey		= $config{'PUBKEY'};
+our $pkg_dir		= $config{'PKG_DIR'};
 our $emerge_opts	= $config{'EMERGE_OPTS'};
 our $set_name		= $config{'SET_NAME'};
