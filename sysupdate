@@ -136,12 +136,13 @@ sub sync_pkgs {
 
 sub install_updates {
 	my @updates;
+	my $tmpindex	= '/var/db/sysupdate/index.txt.tmp';
 
-	if (!checkupdate("/var/db/sysupdate/index.txt.tmp")) {
+	if (!checkupdate($tmpindex)) {
 		print("No downloaded sysupdate archives found, exiting...\n");
 		exit(0);
 	} else {
-		@updates = checkupdate("$dir/index.txt");
+		@updates = checkupdate($tmpindex);
 	}
 
 	foreach my $update (@updates) {
