@@ -125,6 +125,7 @@ sub sync_pkgs {
 	runcmd('/usr/bin/emaint', '-f', 'binhost');
 }
 
+# Install update(s) downloaded with -d/--download.
 sub install_updates {
 	my @updates;
 	my $tmpindex	= '/var/db/sysupdate/index.txt.tmp';
@@ -140,8 +141,12 @@ sub install_updates {
 		extract($update);
 		sync_pkgs($update);
 	}
+	
+	# Do the update
+	runcmd('/usr/bin/emerge', '-avuDU', '--with-bdeps=y', '--usepkg', '@world');
 
-	# run emerge command here
+	# Remove tmpindex
+	unlink($tmpindex) or die("Can't remove $tmpindex: $!\n");
 }
 
 # Should this be a subroutine? Perhaps not.
