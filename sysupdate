@@ -24,13 +24,6 @@ Getopt::Long::Configure('pass_through');
 my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
 my $update_dir	= '/var/db/sysupdate';
 
-# Die on error. Instead of constaly writing "or die ...".
-sub err {
-	my ($err) = @_;
-
-	die("Can't $err file: $!");
-}
-
 # Convenience
 sub msg {
 	my $msg	= @_;
@@ -54,8 +47,8 @@ sub runcmd {
 sub checkupdate {
 	my $index	= @_;
 
-	open(my $f1, '<', $index) or err("open");
-	open(my $f2, '<', "index.orig.txt") or err("open");
+	open(my $f1, '<', $index) or die("Can't open new index: $!\n");
+	open(my $f2, '<', "index.orig.txt") or die("Can't open index.txt: $!\n");
 
 	my @orig = <$f1>;
 	my @new = <$f2>;
@@ -67,8 +60,8 @@ sub checkupdate {
 		my @updates = $list->get_unique;
 		return @updates;
 	}
-	close($f1) or err("close");
-	close($f2) or err("close");
+	close($f1) or die("Can't close new index: $!\n");
+	close($f2) or die("Can't close index.txt: $!\n");
 }
 
 # Verify a file sig with signify(1)
