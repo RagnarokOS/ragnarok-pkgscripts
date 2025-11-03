@@ -4,6 +4,11 @@
 # 
 # sysupdate: update Ragnarok base system.
 
+## NOTE TO SELF
+# exit status:
+# 0	= success (updates were either installed, or downloaded).
+# >0	= error
+
 use strict;
 use warnings;
 use IPC::System::Simple qw(runx);
@@ -162,12 +167,18 @@ sub main {
 		'query',
 	);
 
+	# 'list' and 'install' don't require downloading the update index, so
+	# they come first.
 	if ($opts{'list'}) {
 		list_updates();
 		exit(0);
+	} elsif ($opts{'install'}) {
+		# handle installing pre-downloaded updates.
+		exit(0);
 	}
 
-	# Download index.txt
+	# Every other option requires downloading index.txt and checking if
+	# updates are available, so do it before checking $opts.
 	msg("Downloading update index...");
 	download($dir, 'index.txt', $mirror);
 
@@ -179,12 +190,9 @@ sub main {
 		@updates = checkupdate("$dir/index.txt");
 	}
 
-	# The flags are mutually exclusive.
 	if ($opts{'download'}) {
 		get_update(@updates);
 		move("$dir/index.txt", "/var/db/sysupdate/index.txt.tmp");
-	} elsif ($opts{'install'}) {
-		# handle installing pre-downloaded sysupdates
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
