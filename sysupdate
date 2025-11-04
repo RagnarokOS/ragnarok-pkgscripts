@@ -188,7 +188,7 @@ sub main {
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
-		# handle the default: download and install updates
+		install_updates(@updates);
 	}
 }
 main
