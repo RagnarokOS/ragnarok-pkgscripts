@@ -4,11 +4,6 @@
 # 
 # sysupdate: update Ragnarok base system.
 
-## NOTE TO SELF
-# exit status:
-# 0	= success (updates were either installed, or downloaded).
-# >0	= error
-
 use strict;
 use warnings;
 use IPC::System::Simple qw(runx);
@@ -125,15 +120,7 @@ sub sync_pkgs {
 
 # Install update(s) downloaded with -d/--download.
 sub install_updates {
-	my @updates;
-	my $tmpindex	= '/var/db/sysupdate/index.txt.tmp';
-
-	if (!checkupdate($tmpindex)) {
-		print("No downloaded sysupdate archives found, exiting...\n");
-		exit(0);
-	} else {
-		@updates = checkupdate($tmpindex);
-	}
+	my @updates	=@_;
 
 	foreach my $update (@updates) {
 		extract($update);
@@ -142,9 +129,6 @@ sub install_updates {
 	
 	# Do the update
 	runcmd('/usr/bin/emerge', '-avuDU', '--with-bdeps=y', '--usepkg', '@world');
-
-	# Remove tmpindex
-	unlink($tmpindex) or die("Can't remove $tmpindex: $!\n");
 }
 
 # Should this be a subroutine? Perhaps not.
@@ -166,7 +150,16 @@ sub main {
 		list_updates();
 		exit(0);
 	} elsif ($opts{'install'}) {
-		# handle installing pre-downloaded updates.
+		my $tmpindex = '/var/db/sysupdate/index.txt.tmp';
+
+		if (!checkupdate($tmpindex)) {
+			print("No downloaded sysupdate archives found, exiting...\n");
+			exit(0);
+		} else {
+			@updates = checkupdate($tmpindex);
+		}
+		install_updates(@updates);
+		unlink($tmpindex) or die("Can't remove $tmpindex: $!\n");
 		exit(0);
 	}
 
