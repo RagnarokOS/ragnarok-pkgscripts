@@ -16,7 +16,7 @@ use PkgScripts::Config qw($mirror $pubkey $pkg_dir);
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
 
-my $dir		= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
+my $tmpdir	= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
 my $update_dir	= '/var/db/sysupdate';
 
 # Convenience
@@ -91,9 +91,9 @@ sub get_update {
 
 	msg("Downloading updates...");
 	foreach my $archive (@archives) {
-		download($dir, $archive, $mirror);
+		download($tmpdir, $archive, $mirror);
 		if (verify_sig($archive)) {
-			move("$dir/$archive", "$update_dir/$archive");
+			move("$tmpdir/$archive", "$update_dir/$archive");
 		}
 	}
 }
@@ -120,11 +120,17 @@ sub sync_pkgs {
 
 # Install update(s) downloaded with -d/--download.
 sub install_updates {
-	my @updates	=@_;
+	my @updates	= @_;
+	my @sorted	= sort { $a cmp $b } @updates;
 
-	foreach my $update (@updates) {
+	# Extract and sync separately
+	foreach my $update (@sorted) {
 		extract($update);
-		sync_pkgs($update);
+	}
+
+	foreach my $dir (@sorted) {
+		$dir =~ s/\.tar\.xz$//i; 
+		sync_pkgs($dir);
 	}
 	
 	# Do the update
@@ -166,19 +172,19 @@ sub main {
 	# Every other option requires downloading index.txt and checking if
 	# updates are available, so do it before checking $opts.
 	msg("Downloading update index...");
-	download($dir, 'index.txt', $mirror);
+	download($tmpdir, 'index.txt', $mirror);
 
 	# Exit early if no updates are found
-	if (!checkupdate("$dir/index.txt")) {
+	if (!checkupdate("$tmpdir/index.txt")) {
 		msg("No updates found, exiting...");
 		exit(0);
 	} else {
-		@updates = checkupdate("$dir/index.txt");
+		@updates = checkupdate("$tmpdir/index.txt");
 	}
 
 	if ($opts{'download'}) {
 		get_update(@updates);
-		move("$dir/index.txt", "/var/db/sysupdate/index.txt.tmp");
+		move("$tmpdir/index.txt", "/var/db/sysupdate/index.txt.tmp");
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
