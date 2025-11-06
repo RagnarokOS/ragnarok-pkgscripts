@@ -12,6 +12,7 @@ use File::Copy;
 use File::Temp qw(tempdir);
 use File::chdir;
 use FindBin;
+use lib $FindBin::Bin;
 use PkgScripts::Config qw($mirror $pubkey $pkg_dir);
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
@@ -159,7 +160,7 @@ sub main {
 		my $tmpindex = '/var/db/sysupdate/index.txt.tmp';
 
 		if (!checkupdate($tmpindex)) {
-			print("No downloaded sysupdate archives found, exiting...\n");
+			print("No downloaded update archives found.\nDid you run: 'sysupdate -d' first?.\n");
 			exit(0);
 		} else {
 			@updates = checkupdate($tmpindex);
