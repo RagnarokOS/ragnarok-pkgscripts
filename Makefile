@@ -1,7 +1,13 @@
-# $Ragnarok: Makefile,v 1.5 2025/09/16 15:48:43 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.6 2025/11/10 18:33:53 lecorbeau Exp $
 # Makefile for pkgscripts.
+# NOTE: At some point it would be smart to use a Makefile.pl instead.
 
-SCRIPTS		= pkg_install sysclean mksysupdate reposign
+SCRIPTS		= pkg_install sysclean sysupdate mksysupdate reposign
+PERL_MODS	= PkgScripts/Config.pm PkgScripts/Emerge.pm
+PERL_VERSION	= 5.40
+PERL_MOD_DIR	= /usr/lib64/vendor_perl/${PERL_VERSION}/Ragnarok/PkgScripts
+LIBS		= lib/download
+LIB_DIR		= /usr/lib/ragnarok
 MANPAGES	= pkg_install.1
 
 # For the tarball
@@ -11,11 +17,17 @@ PKGNAME		= ragnarok-pkgscripts-${VERSION}
 all:
 	@echo "Nothing to do for all. Skipping..."
 
-install:
+dirs:
 	install -d ${DESTDIR}/usr/bin
 	install -d ${DESTDIR}/usr/share/man/man1
-	install ${SCRIPTS} ${DESTDIR}/usr/bin
-	install ${MANPAGES} ${DESTDIR}/usr/share/man/man1
+	install -d ${DESTDIR}/${PERL_MOD_DIR}
+	install -d ${DESTDIR}/${LIB_DIR}
+
+install: dirs
+	install -m 755 ${SCRIPTS} ${DESTDIR}/usr/bin
+	install -m 644 ${PERL_MODS} ${DESTDIR}/${PERL_MOD_DIR}
+	install -m 755 ${LIBS} ${DESTDIR}/${LIB_DIR}
+	install -m 644 ${MANPAGES} ${DESTDIR}/usr/share/man/man1
 
 # Create a tarball for the ebuild.
 pkg:
