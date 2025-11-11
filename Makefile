@@ -1,4 +1,4 @@
-# $Ragnarok: Makefile,v 1.6 2025/11/10 18:33:53 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.7 2025/11/11 17:15:39 lecorbeau Exp $
 # Makefile for pkgscripts.
 # NOTE: At some point it would be smart to use a Makefile.pl instead.
 
@@ -18,17 +18,22 @@ all:
 	@echo "Nothing to do for all. Skipping..."
 
 dirs:
+	install -d ${DESTDIR}/etc
 	install -d ${DESTDIR}/usr/bin
 	install -d ${DESTDIR}/usr/share/man/man1
 	install -d ${DESTDIR}/${PERL_MOD_DIR}
 	install -d ${DESTDIR}/${LIB_DIR}
 
 install: dirs
+	install -m 644 pkgscripts.conf ${DESTDIR}/etc
 	install -m 755 ${SCRIPTS} ${DESTDIR}/usr/bin
 	install -m 644 ${PERL_MODS} ${DESTDIR}/${PERL_MOD_DIR}
 	install -m 755 ${LIBS} ${DESTDIR}/${LIB_DIR}
 	install -m 644 ${MANPAGES} ${DESTDIR}/usr/share/man/man1
 
 # Create a tarball for the ebuild.
-pkg:
-	tar czvf ${PKGNAME}.tgz Makefile ${SCRIPTS} ${MANPAGES}
+# Instruction: create the pkg dir, then run
+# 'make DESTDIR=/path/to/pkgdir pkg
+pkg: install
+	cp Makefile ${PKGNAME}/
+	tar czvf ${PKGNAME}.tgz ${PKGNAME}
