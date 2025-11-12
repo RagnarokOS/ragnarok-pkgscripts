@@ -6,15 +6,24 @@ use File::Basename;
 use IPC::System::Simple qw(capturex);
 
 my ($dir)	= @ARGV;
-my @extensions	= qw(.txt .ebuild metadata.xml);
+#my @extensions	= qw(.txt .ebuild metadata.xml);
+
+# Create SHA256 if it doesn't already exist
+if (! -f 'SHA256') {
+	open(my $in, '>', 'SHA256') or die("Can't open SHA256 for reading: $!\n");
+	close($in);
+}
+
 
 opendir(my $d, $dir) or die("Can't open $dir\n");
+open(my $fh, '>', 'SHA256') or die("Can't open SHA256 for writing.\n");
 
 while (my $file = readdir($d)) {
-	if($file =~ /\.txt$/i || $file =~ /\.ebuild$/i || $file eq 'metadata.xml') {
+	if($file =~ /\.ebuild$/i || $file eq 'metadata.xml' || $file eq 'Manifest') {
 		my $sum = capturex('/usr/bin/sha256sum', '--tag', "$file");
-		print("SHA256: $sum")
+		print($fh $sum);
 	}
 }
 
 closedir($d) or die("Can't close $dir\n");
+close($fh) or die("Can't close SHA256.\n");
