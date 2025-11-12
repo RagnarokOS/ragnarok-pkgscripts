@@ -5,7 +5,7 @@ use warnings;
 use File::Basename;
 use IPC::System::Simple qw(capturex runx);
 
-my ($dir)	= @ARGV;
+my ($dir, $sec_key)	= @ARGV;
 #my @extensions	= qw(.txt .ebuild metadata.xml);
 
 # Create SHA256 if it doesn't already exist
