@@ -1,22 +1,20 @@
-#!/bin/sh
+#!/usr/bin/env perl
 
-# $Ragnarok: reposign,v 1.1 2025/06/16 16:07:26 lecorbeau Exp $
-# reposign: sign the .ebuild, metadata and Manifest in a repo using signify(1).
-# Usage: reposign <repodir> </path/to/key.sec>
+use strict;
+use warnings;
+use File::Basename;
+use IPC::System::Simple qw(capturex);
 
-_repo=$1
-_seckey=$2
-_curdir=$(pwd)
+my ($dir)	= @ARGV;
+my @extensions	= qw(.txt .ebuild metadata.xml);
 
-cd "$_repo" || exit
-for _file in $(find * -type f -name '*.ebuild' -o -name 'Manifest' -o -name 'metadata.xml' | while IFS='' read -r file; do echo "$file"; done); do
-	sha256sum --tag "$_file" >> SHA256
-done
+opendir(my $d, $dir) or die("Can't open $dir\n");
 
-/usr/bin/signify -S -s "$_seckey" -m SHA256 -x SHA256.sig
+while (my $file = readdir($d)) {
+	if($file =~ /\.txt$/i || $file =~ /\.ebuild$/i || $file eq 'metadata.xml') {
+		my $sum = capturex('/usr/bin/sha256sum', '--tag', "$file");
+		print("SHA256: $sum")
+	}
+}
 
-/usr/bin/cat SHA256 >> SHA256.sig
-
-/usr/bin/signify -C -p /etc/signify/ragnarok02.pub -x SHA256.sig
-
-cd "$_curdir" || exit
+closedir($d) or die("Can't close $dir\n");
