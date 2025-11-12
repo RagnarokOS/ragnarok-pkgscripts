@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Basename;
-use IPC::System::Simple qw(capturex);
+use IPC::System::Simple qw(capturex runx);
 
 my ($dir)	= @ARGV;
 #my @extensions	= qw(.txt .ebuild metadata.xml);
@@ -14,7 +14,7 @@ if (! -f 'SHA256') {
 	close($in);
 }
 
-
+# Populate SHA256
 opendir(my $d, $dir) or die("Can't open $dir\n");
 open(my $fh, '>', 'SHA256') or die("Can't open SHA256 for writing.\n");
 
@@ -27,3 +27,17 @@ while (my $file = readdir($d)) {
 
 closedir($d) or die("Can't close $dir\n");
 close($fh) or die("Can't close SHA256.\n");
+
+# Sign
+runx('/usr/bin/signify', '-S', '-s', "$sec_key", '-m', '-x', 'SHA256.sig');
+
+# Add contents of SHA256 to SHA256.sig
+open(my $in, '<', 'SHA256') or die("Can't open SHA256 for reading\n");
+open(my $out, '>>', 'SHA256.sig') or die("Can't open SHA256.sig for writing\n");
+
+while (my $line = <$in>) {
+	print($out $line);
+}
+
+close($in) or die("Can't close SHA256\n");
+close($out) or die("Can't close SHA256.sig\n");
