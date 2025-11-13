@@ -15,6 +15,9 @@ if (! -f 'SHA256') {
 }
 
 # Populate SHA256
+
+print("Creating SHA256\n");
+
 opendir(my $d, $dir) or die("Can't open $dir\n");
 open(my $fh, '>', 'SHA256') or die("Can't open SHA256 for writing.\n");
 
@@ -29,9 +32,12 @@ closedir($d) or die("Can't close $dir\n");
 close($fh) or die("Can't close SHA256.\n");
 
 # Sign
-runx('/usr/bin/signify', '-S', '-s', "$sec_key", '-m', '-x', 'SHA256.sig');
+print("Signing...\n");
+
+runx('/usr/bin/signify', '-S', '-s', "$sec_key", '-m', 'SHA256', '-x', 'SHA256.sig');
 
 # Add contents of SHA256 to SHA256.sig
+print("Creating SHA256.sig\n");
 open(my $in, '<', 'SHA256') or die("Can't open SHA256 for reading\n");
 open(my $out, '>>', 'SHA256.sig') or die("Can't open SHA256.sig for writing\n");
 
@@ -41,3 +47,8 @@ while (my $line = <$in>) {
 
 close($in) or die("Can't close SHA256\n");
 close($out) or die("Can't close SHA256.sig\n");
+
+# Verify for good measure
+print("Verifying signatures for good measure.\n");
+
+runx('/usr/bin/signify', '-C', '-p', "$pubkey", '-x', 'SHA256.sig');
