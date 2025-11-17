@@ -1,0 +1,36 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt SYSUPDATE 1
+.Os
+.Sh NAME
+.Nm sysupdate
+.Nd update base system software packages (@world)
+.Sh SYNOPSIS
+.Nm pkg_install
+.Bk -words
+.Op Fl d
+.Op Fl i
+.Op Fl l
+.Op Fl q
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+command is used to update base system packages, ie the
+.Ar @world
+set. When invoked without any options,
+.Nm
+will download, verify, extract and install system updates if any are available.
+.Pp
+The options are as follows:
+.Bl -tag -width -Ds
+.It Fl d
+Download, but don't install, update archive.
+.It Fl i
+Install all updates that were downloaded with the
+.Ar -d
+option.
+.It Fl l
+List installed updates.
+.It Fl q
+Check if any updates are available.
