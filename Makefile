@@ -1,4 +1,4 @@
-# $Ragnarok: Makefile,v 1.7 2025/11/11 17:15:39 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.8 2025/11/17 17:06:03 lecorbeau Exp $
 # Makefile for pkgscripts.
 # NOTE: At some point it would be smart to use a Makefile.pl instead.
 
@@ -8,7 +8,7 @@ PERL_VERSION	= 5.40
 PERL_MOD_DIR	= /usr/lib64/vendor_perl/${PERL_VERSION}/Ragnarok/PkgScripts
 LIBS		= lib/download
 LIB_DIR		= /usr/lib/ragnarok
-MANPAGES	= pkg_install.1
+MANPAGES	= pkg_install.1 reposign.1 sysupdate.1
 
 # For the tarball
 VERSION		= 0.1
