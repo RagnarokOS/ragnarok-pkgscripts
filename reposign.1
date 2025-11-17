@@ -1,0 +1,34 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt REPOSIGN 1
+.Os
+.Sh NAME
+.Nm reposign
+.Nd sign ebuild repository files with signify
+.Sh SYNOPSIS
+.Nm reposign
+.Bk -words
+.Ar directory seckey
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+command is used to sign repository files (.ebuild, metadata.xml and Manifest)
+with
+.Xr signify 1 .
+The integrity of each file can then be verified using the same tool.
+.Sh EXAMPLE
+Sign the contents of x11-wm/raven:
+.Dl # cd /var/db/repos/ragnarok/x11-wm/raven
+.Dl # reposign . /path/to/key.sec
+.Pp
+This will sign all files using the provided sec key, then verify their
+signatures to ensure the process was successful. The SHA256 and SHA256.sig
+files that were created can then be shared and used for verification.
+.Sh SEE ALSO
+.Xr signify 1 ,
+.Xr pkg_install 1 , 
+.Xr sysupdate 1 .
+.Sh AUTHORS
+.An -nosplit
+.An Ian LeCorbeau Aq Mt ianlecorbeau@proton.me
