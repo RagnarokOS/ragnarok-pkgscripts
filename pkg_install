@@ -72,6 +72,12 @@ sub install_pkg {
 	emcmd("$emerge_opts", '--oneshot', "@pkgs");
 }
 
+sub pretend {
+	my (@pkgs)	= @_;
+
+	emcmd("$emerge_opts", '--oneshot', '--pretend', "@pkgs");
+}
+
 sub update_pkg {
 	if (@_) {
 		emcmd('-av', '--oneshot', "@_");
@@ -81,12 +87,15 @@ sub update_pkg {
 }
 
 my %opts;
-getopts('ru', \%opts) or die("Wrong option\n");
+getopts('pru', \%opts) or die("Wrong option\n");
 
 # Default is no opts.
 if (!%opts) {
 	install_pkg(@ARGV);
 } else {
+	if ($opts{p}) {
+		pretend(@ARGV);
+	}
 	if ($opts{r}) {
 		rm_pkg(@ARGV);
 	}
