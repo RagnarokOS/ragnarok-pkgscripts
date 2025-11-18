@@ -8,10 +8,9 @@
 .Sh SYNOPSIS
 .Nm pkg_install
 .Bk -words
-.Op Fl d
 .Op Fl p
+.Op Fl r
 .Op Fl u
-.Op Fl up
 .Op Ar pkg-name ...
 .Ek
 .Sh DESCRIPTION
@@ -39,18 +38,35 @@ will simply reinstall the package, whether an update is available or not.
 .Pp
 The options are as follows:
 .Bl -tag -width -Ds
-.It Fl d Ar pkg-name
+.It Fl p Ar pkg-name
+Pretends to install or update a package, or the whole set if no
+.Ar pkg-name
+is provided, showing what
+dependencies would be installed along the way.
+.It Fl r Ar pkg-name
 Delete/remove
-.Ar pkg-name .
-.It Fl p
-Pretends installing package (or @local) set. Useful to check a package's dependecies.
+.Ar pkg-name
+from the set file. Run
+.Xr sysclean 1
+afterwards to remove the package from the system.
 .It Fl u
 If no
 .Ar pkg-name
 is specified as the second argument, update all packages. Otherwise, update
 .Ar pkg-name .
-.It Fl up
-Same as the
-.Ar p
-flag, but for updates.
+.Sh EMERGE OPTS
+.Nm
+is merely a wrapper around 
+.Xr emerge 1 .
+The default emerge options passed are
+.Fl avuDU
+and 
+.Ic \-\-with\-bdeps=y .
+This can be changed in the
+.Ar pkgscripts.conf
+file.
+.Sh SEE ALSO
+.Xr pkgscripts.conf 5 ,
+.Xr emerge 1 ,
+.Xr sysclean 1 .
 
