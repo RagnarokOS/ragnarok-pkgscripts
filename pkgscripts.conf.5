@@ -1,0 +1,24 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt PKGSCRIPTS.CONF 5
+.Os
+.Sh NAME
+.Nm pkgscripts.conf
+.Nd configuration file for ragnarok-pkgscripts
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the ragnarok-pkgscripts. It's format
+follows the simple
+.Ic key = value
+standard.
+.Sh CONFIG OPTIONS
+The keys are:
+.Bl -tag -width Ds
+.It Ic VERSION
+The current Ragnarok version (eg. 02).
+.It Ic MIRROR
+Full uri to the mirror where sysupdates should be fetched from.
+.It Ic PUBKEY
+Path to the public
+.Xr signify 1
+key used to verify tarball integrity.
