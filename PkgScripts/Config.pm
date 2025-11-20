@@ -23,5 +23,6 @@ my %config		= $conf->getall;
 our $mirror		= $config{'MIRROR'};
 our $pubkey		= $config{'PUBKEY'};
 our $pkg_dir		= $config{'PKG_DIR'};
+our $cached		= $config{'CACHE_UPDATES'};
 our $emerge_opts	= $config{'EMERGE_OPTS'};
 our $set_name		= $config{'SET_NAME'};

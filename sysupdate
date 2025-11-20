@@ -13,7 +13,7 @@ use File::Temp qw(tempdir);
 use File::chdir;
 use FindBin;
 use lib $FindBin::Bin;
-use PkgScripts::Config qw($mirror $pubkey $pkg_dir);
+use PkgScripts::Config qw($mirror $pubkey $pkg_dir $cached);
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
 
@@ -136,6 +136,20 @@ sub install_updates {
 	
 	# Do the update
 	runcmd('/usr/bin/emerge', '-avuDU', '--with-bdeps=y', '--usepkg', '@world');
+
+	# Remove dir created when tarball was extracted
+	foreach my $dir (@sorted) {
+		$dir =~ s/\.tar\.xz$//i; 
+		unlink($dir) or die("Can't remove $dir: $!\n");
+	}
+
+	# Remove tarball if CACHE_UPDATES is false
+	if (!$cached) {
+		foreach my $tarball (@updates) {
+			unlink($tarball) or die("Can't remove $tarball: $!\n");
+		}
+	}
+	
 }
 
 # Should this be a subroutine? Perhaps not.
