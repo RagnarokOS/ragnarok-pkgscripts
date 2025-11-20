@@ -14,11 +14,41 @@ standard.
 .Sh CONFIG OPTIONS
 The keys are:
 .Bl -tag -width Ds
-.It Ic VERSION
+.It Ic VERSION Ar number
 The current Ragnarok version (eg. 02).
-.It Ic MIRROR
+.It Ic MIRROR Ar /path/to/mirror
 Full uri to the mirror where sysupdates should be fetched from.
-.It Ic PUBKEY
+.It Ic PKG_DIR Ar /path/to/binpkg/dir
+Directory where binary packages are saved.
+.It Ic PUBKEY Ar /path/to/key.pub
 Path to the public
 .Xr signify 1
 key used to verify tarball integrity.
+.It Ic EMERGE_OPTS Ar options
+Default options passed to emerge for
+.Xr pkg_install 1 .
+.It Ic SET_NAME Ar set-name
+The name for the non-base system package set.
+.Sh VARIABLES
+.Nm
+allows using key/value pairs as variables to be used as values in other
+options, for example:
+.Bd -literal -offset indent
+MIRROR = https://path/to/mirror/${VERSION}
+.Ed
+.Pp
+This allows creating custom keys for values that may be needed in multiple
+options, e.g. a custom
+.Ic DIST_NAME
+key may be used as such:
+.Bd -literal -offset indent
+DIST_NAME = mydist
+MIRROR = https://example.org/${DIST_NAME}/mirror/${VERSION}
+PUBKEY = /etc/signify/${DIST_NAME}${VERSION}.pub
+SET_NAME = @${DIST_NAME}
+.Ed
+.Sh SEE ALSO
+.Xr pkg_install 1 ,
+.Xr sysupdate 1 ,
+.Xr sysclean 1 ,
+.Xr emerge 1 .
