@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config::General;
 use Exporter 'import';
-our @EXPORT_OK = qw($emerge_opts $set_name);
+our @EXPORT_OK = qw($mirror $pubkey $pkg_dir $cached $emerge_opts $set_name $update_dir);
 
 # Change to /etc/pkgscripts.conf when ready
 my $conffile	= 'pkgscripts.conf';
@@ -26,3 +26,4 @@ our $pkg_dir		= $config{'PKG_DIR'};
 our $cached		= $config{'CACHE_UPDATES'};
 our $emerge_opts	= $config{'EMERGE_OPTS'};
 our $set_name		= $config{'SET_NAME'};
+our $update_dir		= $config{'UPDATE_DIR'};

@@ -13,12 +13,11 @@ use File::Temp qw(tempdir);
 use File::chdir;
 use FindBin;
 use lib $FindBin::Bin;
-use PkgScripts::Config qw($mirror $pubkey $pkg_dir $cached);
+use PkgScripts::Config qw($mirror $pubkey $pkg_dir $cached $update_dir);
 use Getopt::Long;
 Getopt::Long::Configure('pass_through');
 
 my $tmpdir	= tempdir("sysupdate-XXXXXXXXXX", CLEANUP => 1);
-my $update_dir	= '/var/db/sysupdate';
 
 # Convenience
 sub msg {
@@ -103,7 +102,7 @@ sub get_update {
 sub extract {
 	my $archive	= @_;
 
-	runcmd('/usr/bin/tar', "/var/db/sysupdate/$archive", '-C', '/var/db/sysupdate/');
+	runcmd('/usr/bin/tar', "$update_dir/$archive", '-C', "$update_dir/");
 }
 
 # Use rsync to send packages to PKGDIR, then fix Packages file
@@ -171,7 +170,7 @@ sub main {
 		list_updates();
 		exit(0);
 	} elsif ($opts{'install'}) {
-		my $tmpindex = '/var/db/sysupdate/index.txt.tmp';
+		my $tmpindex = "$update_dir/index.txt.tmp";
 
 		if (!checkupdate($tmpindex)) {
 			print("No downloaded update archives found.\nDid you run: 'sysupdate -d' first?.\n");
@@ -199,7 +198,7 @@ sub main {
 
 	if ($opts{'download'}) {
 		get_update(@updates);
-		move("$tmpdir/index.txt", "/var/db/sysupdate/index.txt.tmp");
+		move("$tmpdir/index.txt", "$update_dir/index.txt.tmp");
 	} elsif ($opts{'query'}) {
 		print(@updates);
 	} else {
