@@ -9,6 +9,7 @@ use warnings;
 use IPC::System::Simple qw(runx);
 use List::Compare;
 use File::Copy;
+use File::Path qw(make_path);
 use File::Temp qw(tempdir);
 use File::chdir;
 use FindBin;
@@ -93,6 +94,10 @@ sub get_update {
 	foreach my $archive (@archives) {
 		download($tmpdir, $archive, $mirror);
 		if (verify_sig($archive)) {
+			# Create update dir if it doesn't exist
+			if (! -d $update_dir) {
+				make_path($update_dir) or die("Can't create $update_dir\n");
+			}
 			move("$tmpdir/$archive", "$update_dir/$archive");
 		}
 	}
