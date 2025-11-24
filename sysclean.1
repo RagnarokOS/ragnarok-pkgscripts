@@ -1,0 +1,39 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt SYSCLEAN 1
+.Os
+.Sh NAME
+.Nm sysclean
+.Nd clean up the system from packages that are no longer needed
+.Sh DESCRIPTION
+The
+.Nm
+command is used to run
+.Ic emerge \-\-depclean
+while ignoring packages from the non-base system set, e.g.
+.Ar @local .
+.Pp
+.Nm
+itself does not have any command line options, but will accept any
+.Ic emerge
+options which can be passed to
+.Ic \-\-depclean .
+For example
+.Pp
+.Dl # sysclean -p
+.Pp
+would simply pretend to clean up the system, without actually removing
+anything.
+.Pp
+In order to remove a specific package from the
+.Ar @local
+set, running
+.Ic pkg_install -r
+against the package name is required first.
+.Sh SEE ALSO
+.Xr pkg_install 1 ,
+.Xr sysupdate 1 ,
+.Xr emerge 1 .
+.Sh AUTHORS
+.An -nosplit
+.An Ian LeCorbeau Aq Mt ianlecorbeau@proton.me
