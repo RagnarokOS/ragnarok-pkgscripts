@@ -28,9 +28,26 @@ The options are as follows:
 Download, but don't install, update archive.
 .It Fl i
 Install all updates that were downloaded with the
-.Ar -d
+.Fl d
 option.
 .It Fl l
 List installed updates.
 .It Fl q
 Check if any updates are available.
+.Sh CONFIG FILE
+The
+.Ar /etc/pkgscripts.conf
+allows the user to set specific options for
+.Nm ,
+such as which mirror should be used to fetch tarballs from,
+which pubkey to use to verify them, where on the system they
+should be saved (and if they should be saved at all) as well
+as what directory should be used as the
+.Ar PKGDIR .
+Refer to the config file's manual page for more details.
+.Sh SEE ALSO
+.Xr pkgscripts.conf 5 ,
+.Xr sysclean 1 ,
+.Xr mksysupdate 1 ,
+.Xr pkg_install 1 ,
+.Xr emerge 1 .
