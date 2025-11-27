@@ -1,0 +1,31 @@
+.\"	$Ragnarok$
+.Dd $Mdocdate$
+.Dt MKSYSUPDATE 1
+.Os
+.Sh NAME
+.Nm mksysupdate
+.Nd create a base system update tarball for distribution
+.Sh DESCRIPTION
+The
+.Nm
+command is used to create a distributable base system update tarball,
+which can be fetched, verified and installed via the
+.Xr sysupdate 1
+command.
+.Pp
+The system update creation consists of verifying if any updates are
+available and if so, create a new
+.Ar PKGDIR ,
+then download/compile packages with
+.Xr emerge 1 ,
+before creating a tarball.
+.Pp
+.Nm
+does not take any command line options or arguments.
+.Sh SEE ALSO
+.Xr pkg_install 1 ,
+.Xr sysupdate 1 ,
+.Xr emerge 1 .
+.Sh AUTHORS
+.An -nosplit
+.An Ian LeCorbeau Aq Mt ianlecorbeau@proton.me
