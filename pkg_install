@@ -82,7 +82,7 @@ sub update_pkg {
 	if (@_) {
 		emcmd('-av', '--oneshot', "@_");
 	} else {
-		emcmd("$emerge_opts", '--oneshot', "$set_name");
+		emcmd("$emerge_opts", '--oneshot', "\@$set_name");
 	}
 }
 
