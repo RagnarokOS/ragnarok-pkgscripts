@@ -1,4 +1,4 @@
-# $Ragnarok: Makefile,v 1.10 2025/11/29 16:48:26 lecorbeau Exp $
+# $Ragnarok: Makefile,v 1.11 2025/12/16 15:07:59 lecorbeau Exp $
 # Makefile for pkgscripts.
 # NOTE: At some point it would be smart to use a Makefile.pl instead.
 
@@ -37,4 +37,4 @@ install: dirs
 # 'make DESTDIR=/path/to/pkgdir pkg
 pkg: install
 	cp Makefile ${PKGNAME}/
-	tar czvf ${PKGNAME}.tgz ${PKGNAME}
+	tar cJvf ${PKGNAME}.tar.xz ${PKGNAME}
