@@ -8,8 +8,9 @@ use IPC::System::Simple qw(runx);
 use FindBin;
 use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
+use PkgScripts::Config qw($set_name);
 
-my $file	= '/etc/portage/sets/local';
+my $file	= "/etc/portage/sets/$set_name";
 my @cmdargs	= @ARGV;
 
 # Get list of packages in @local to exclude.
