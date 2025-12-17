@@ -5,8 +5,6 @@
 use strict;
 use warnings;
 use IPC::System::Simple qw(runx);
-use FindBin;
-use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
 use PkgScripts::Config qw($set_name);
 

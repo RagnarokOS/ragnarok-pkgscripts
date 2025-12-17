@@ -7,8 +7,6 @@ use strict;
 use warnings;
 use IPC::System::Simple qw(runx);
 use POSIX qw(strftime);
-use FindBin;
-use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
 
 my $date	= strftime('%Y%m%d%H%M%S', localtime);

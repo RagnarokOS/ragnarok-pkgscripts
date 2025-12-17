@@ -5,9 +5,7 @@
 
 use strict;
 use warnings;
-use FindBin;
 use Getopt::Std;
-use lib $FindBin::Bin;
 use PkgScripts::Emerge qw(emcmd);
 use PkgScripts::Config qw($emerge_opts $set_name);
 

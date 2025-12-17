@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use File::Basename;
 use IPC::System::Simple qw(capturex runx);
-use FindBin;
-use lib $FindBin::Bin;
 use PkgScripts::Config qw($pubkey);
 
 my ($dir, $sec_key)	= @ARGV;
